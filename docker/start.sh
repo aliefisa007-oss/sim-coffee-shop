@@ -1,15 +1,21 @@
 #!/bin/bash
+set -e
 
-# Cache config
+cd /var/www/html
+
+# Generate key jika belum ada
+php artisan key:generate --force
+
+# Cache
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run migrations
+# Migrate
 php artisan migrate --force
 
-# Seed database (hanya jika belum ada data)
+# Seed
 php artisan db:seed --force
 
-# Start Apache
-apache2-foreground
+# Jalankan server Laravel bukan Apache
+php artisan serve --host=0.0.0.0 --port=8000
