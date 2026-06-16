@@ -1,0 +1,16 @@
+{
+    "php": {
+        "extensions": [
+            "gd",
+            "mbstring",
+            "xml",
+            "bcmath",
+            "curl",
+            "zip",
+            "intl",
+            "pdo_mysql",
+            "tokenizer",
+            "fileinfo"
+        ]
+    }
+}
