@@ -27,14 +27,12 @@ CACHE_STORE="${CACHE_STORE}"
 FILESYSTEM_DISK="${FILESYSTEM_DISK}"
 EOF
 
-echo "✅ .env created successfully"
-cat .env
+echo "✅ .env created"
 
 echo "🔧 Clearing cache..."
-php artisan config:clear
-php artisan cache:clear
+php artisan config:clear 2>/dev/null || true
 
-echo "⚡ Caching config..."
+echo "⚡ Caching..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -42,21 +40,8 @@ php artisan view:cache
 echo "🗄️ Running migrations..."
 php artisan migrate --force
 
-echo "🌱 Checking if seeding needed..."
-php artisan tinker --execute="
-\$count = \App\Models\User::count();
-echo \$count;
-exit;
-" > /tmp/usercount.txt 2>&1
-USERCOUNT=$(cat /tmp/usercount.txt | grep -o '[0-9]*' | head -1)
+echo "🌱 Seeding..."
+php artisan db:seed --force 2>/dev/null || echo "⚠️ Seeding skipped or failed"
 
-if [ -z "$USERCOUNT" ] || [ "$USERCOUNT" = "0" ]; then
-    echo "🌱 Seeding database..."
-    php artisan db:seed --force
-    echo "✅ Seeding done"
-else
-    echo "⏭️ Skip seeding - $USERCOUNT users already exist"
-fi
-
-echo "🚀 Starting Laravel on port ${PORT:-8000}..."
-php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+echo "🚀 Starting server on port ${PORT:-8000}..."
+exec php
