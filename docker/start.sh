@@ -43,5 +43,5 @@ php artisan migrate --force
 echo "🌱 Seeding..."
 php artisan db:seed --force 2>/dev/null || echo "⚠️ Seeding skipped or failed"
 
-echo "🚀 Starting server on port ${PORT:-8000}..."
-exec php
+echo "🚀 Starting server on port ${PORT}..."
+exec php artisan serve --host=0.0.0.0 --port=${PORT}
