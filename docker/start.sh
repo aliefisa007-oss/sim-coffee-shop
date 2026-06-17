@@ -3,52 +3,60 @@ set -e
 
 cd /var/www/html
 
-# Buat .env dari environment variables
+echo "📝 Creating .env file..."
+
 cat > .env << EOF
-APP_NAME="${APP_NAME:-Contact Coffee}"
-APP_ENV="${APP_ENV:-production}"
+APP_NAME="${APP_NAME}"
+APP_ENV="${APP_ENV}"
 APP_KEY="${APP_KEY}"
-APP_DEBUG="${APP_DEBUG:-false}"
-APP_URL="${APP_URL:-http://localhost}"
+APP_DEBUG="${APP_DEBUG}"
+APP_URL="${APP_URL}"
 
-LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
-LOG_LEVEL="${LOG_LEVEL:-error}"
+LOG_CHANNEL="${LOG_CHANNEL}"
+LOG_LEVEL="${LOG_LEVEL}"
 
-DB_CONNECTION="${DB_CONNECTION:-mysql}"
+DB_CONNECTION="${DB_CONNECTION}"
 DB_HOST="${DB_HOST}"
-DB_PORT="${DB_PORT:-3306}"
+DB_PORT="${DB_PORT}"
 DB_DATABASE="${DB_DATABASE}"
 DB_USERNAME="${DB_USERNAME}"
 DB_PASSWORD="${DB_PASSWORD}"
 
-SESSION_DRIVER="${SESSION_DRIVER:-file}"
-CACHE_STORE="${CACHE_STORE:-file}"
-FILESYSTEM_DISK=local
+SESSION_DRIVER="${SESSION_DRIVER}"
+CACHE_STORE="${CACHE_STORE}"
+FILESYSTEM_DISK="${FILESYSTEM_DISK}"
 EOF
 
-echo "✅ .env created"
+echo "✅ .env created successfully"
+cat .env
 
-# Clear & cache config
+echo "🔧 Clearing cache..."
 php artisan config:clear
+php artisan cache:clear
+
+echo "⚡ Caching config..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-echo "✅ Config cached"
-
-# Migrate
+echo "🗄️ Running migrations..."
 php artisan migrate --force
-echo "✅ Migration done"
 
-# Seed hanya jika users belum ada
-USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
-if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+echo "🌱 Checking if seeding needed..."
+php artisan tinker --execute="
+\$count = \App\Models\User::count();
+echo \$count;
+exit;
+" > /tmp/usercount.txt 2>&1
+USERCOUNT=$(cat /tmp/usercount.txt | grep -o '[0-9]*' | head -1)
+
+if [ -z "$USERCOUNT" ] || [ "$USERCOUNT" = "0" ]; then
+    echo "🌱 Seeding database..."
     php artisan db:seed --force
     echo "✅ Seeding done"
 else
-    echo "⏭️ Skip seeding - data already exists"
+    echo "⏭️ Skip seeding - $USERCOUNT users already exist"
 fi
 
-# Start Laravel
-echo "🚀 Starting Laravel server..."
+echo "🚀 Starting Laravel on port ${PORT:-8000}..."
 php artisan serve --host=0.0.0.0 --port=${PORT:-8000}

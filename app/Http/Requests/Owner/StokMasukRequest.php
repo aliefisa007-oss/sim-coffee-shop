@@ -14,8 +14,9 @@ class StokMasukRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jumlah'     => ['required', 'numeric', 'min:0.01'],
-            'keterangan' => ['nullable', 'string', 'max:255'],
+            'jumlah'           => ['required', 'numeric', 'min:0.01'],
+            'harga_per_satuan' => ['nullable', 'numeric', 'min:0'],
+            'keterangan'       => ['nullable', 'string', 'max:255'],
         ];
     }
 }
