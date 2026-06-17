@@ -11,6 +11,7 @@ APP_ENV="${APP_ENV}"
 APP_KEY="${APP_KEY}"
 APP_DEBUG="${APP_DEBUG}"
 APP_URL="${APP_URL}"
+ASSET_URL="https://sim-coffee-shop-production.up.railway.app"
 
 LOG_CHANNEL="${LOG_CHANNEL}"
 LOG_LEVEL="${LOG_LEVEL}"
