@@ -94,29 +94,34 @@ class TransaksiController extends Controller
     $transaksi = $this->repo->findById($id);
     return view('kasir.struk', compact('transaksi'));
 }
+
 public function laporan(Request $request)
 {
-    $dari   = $request->get('dari', now()->format('Y-m-d'));
-    $sampai = $request->get('sampai', now()->format('Y-m-d'));
+    $dari         = $request->get('dari', now()->format('Y-m-d'));
+    $sampai       = $request->get('sampai', now()->format('Y-m-d'));
+    $metodeBayar  = $request->get('metode_bayar', 'semua');
 
-    // Kalau kasir, hanya lihat transaksi sendiri
-    // Kalau owner, lihat semua
     $query = \App\Models\Transaksi::selesai()
         ->with(['user', 'detailTransaksi'])
         ->whereBetween('tanggal', [
             $dari . ' 00:00:00',
-            $sampai . ' 23:59:59'
+            $sampai . ' 23:59:59',
         ]);
 
     if (auth()->user()->isKasir()) {
         $query->where('user_id', auth()->id());
     }
 
-    $transaksi = $query->orderBy('tanggal')->get();
+    // Filter metode bayar
+    if ($metodeBayar !== 'semua') {
+        $query->where('metode_bayar', $metodeBayar);
+    }
 
-    // Kelompokkan per tanggal
+    $transaksi  = $query->orderBy('tanggal')->get();
     $perTanggal = $transaksi->groupBy(fn($t) => $t->tanggal->format('Y-m-d'));
 
-    return view('kasir.laporan', compact('perTanggal', 'dari', 'sampai', 'transaksi'));
+    return view('kasir.laporan', compact(
+        'perTanggal', 'dari', 'sampai', 'transaksi', 'metodeBayar'
+    ));
 }
 }

@@ -30,6 +30,25 @@
                 🖨️ Print
             </button>
         </div>
+        <div>
+    <label style="font-size:11px; color:#888; text-transform:uppercase; display:block; margin-bottom:4px;">
+        Jenis Transaksi
+    </label>
+    <select name="metode_bayar" class="form-select" style="width:auto;">
+        <option value="semua" {{ $metodeBayar === 'semua' ? 'selected' : '' }}>
+            Semua Jenis
+        </option>
+        <option value="cash" {{ $metodeBayar === 'cash' ? 'selected' : '' }}>
+            💵 Cash
+        </option>
+        <option value="qris" {{ $metodeBayar === 'qris' ? 'selected' : '' }}>
+            📱 QRIS
+        </option>
+        <option value="transfer" {{ $metodeBayar === 'transfer' ? 'selected' : '' }}>
+            🏦 Transfer
+        </option>
+    </select>
+</div>
     </form>
 </div>
 
