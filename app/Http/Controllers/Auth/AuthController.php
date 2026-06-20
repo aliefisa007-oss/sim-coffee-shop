@@ -35,9 +35,11 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return $user->isOwner()
-            ? redirect()->route('owner.dashboard')
-            : redirect()->route('kasir.pos.index');
+        return match($user->role) {
+            'owner' => redirect()->route('owner.dashboard'),
+            'admin' => redirect()->route('owner.menu.index'),
+            default => redirect()->route('kasir.pos.index'),
+        };
     }
 
     public function logout(Request $request)

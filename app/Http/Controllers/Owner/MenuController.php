@@ -65,10 +65,25 @@ class MenuController extends Controller
     }
 
     public function destroy(int $id)
-    {
-        $this->menuRepo->delete($id);
+{
+    $menu = $this->menuRepo->findById($id);
+
+    // Cek apakah menu pernah dipakai di transaksi
+    if ($menu->detailTransaksi()->exists()) {
+        // Nonaktifkan saja, jangan hapus
+        $this->menuRepo->update($id, ['status_aktif' => false]);
         return redirect()->route('owner.menu.index')
-                         ->with('success', 'Menu berhasil dihapus.');
+                         ->with('success', 'Menu tidak bisa dihapus karena pernah ada di transaksi. Menu dinonaktifkan.');
+    }
+
+    // Hapus resep dulu
+    $menu->resepProduk()->delete();
+
+    // Hapus menu
+    $this->menuRepo->delete($id);
+
+    return redirect()->route('owner.menu.index')
+                     ->with('success', 'Menu berhasil dihapus.');
     }
 
     public function toggleStatus(int $id)

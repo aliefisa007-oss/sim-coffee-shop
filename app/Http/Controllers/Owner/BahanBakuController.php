@@ -26,16 +26,21 @@ class BahanBakuController extends Controller
         return back()->with('success', 'Bahan baku berhasil ditambahkan.');
     }
 
-    public function destroy(int $id)
+   public function destroy(int $id)
 {
     $bahan = $this->repo->findById($id);
 
     // Cek apakah masih dipakai di resep
     if ($bahan->resepProduk()->exists()) {
-        return back()->with('error', 'Bahan baku tidak bisa dihapus karena masih digunakan di resep produk.');
+        return back()->with('error', 'Bahan baku tidak bisa dihapus karena masih digunakan di resep produk. Hapus dari resep dulu.');
     }
 
+    // Hapus riwayat stok dulu
+    $bahan->riwayatStok()->delete();
+
+    // Hapus bahan baku
     $this->repo->delete($id);
+
     return back()->with('success', 'Bahan baku berhasil dihapus.');
 }
 }

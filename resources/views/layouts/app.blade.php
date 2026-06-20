@@ -369,69 +369,97 @@
         </div>
 
         <nav>
-            @if(auth()->user()->isOwner())
-                <div class="nav-item">
-                    <a href="{{ route('owner.dashboard') }}" class="{{ request()->routeIs('owner.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-chart-line fa-fw"></i> Dashboard
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.users.index') }}" class="{{ request()->routeIs('owner.users.*') ? 'active' : '' }}">
-                        <i class="fas fa-users fa-fw"></i> Users
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.kategori.index') }}" class="{{ request()->routeIs('owner.kategori.*') ? 'active' : '' }}">
-                        <i class="fas fa-tags fa-fw"></i> Kategori
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.menu.index') }}" class="{{ request()->routeIs('owner.menu.*') ? 'active' : '' }}">
-                        <i class="fas fa-coffee fa-fw"></i> Menu
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.bahan-baku.index') }}" class="{{ request()->routeIs('owner.bahan-baku.*') ? 'active' : '' }}">
-                        <i class="fas fa-box fa-fw"></i> Bahan Baku
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.resep.index') }}" class="{{ request()->routeIs('owner.resep.*') ? 'active' : '' }}">
-                        <i class="fas fa-scroll fa-fw"></i> Resep (BOM)
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.riwayat-stok.index') }}" class="{{ request()->routeIs('owner.riwayat-stok.*') ? 'active' : '' }}">
-                        <i class="fas fa-history fa-fw"></i> Riwayat Stok
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.laporan.index') }}" class="{{ request()->routeIs('owner.laporan.index') ? 'active' : '' }}">
-                        <i class="fas fa-file-alt fa-fw"></i> Laporan
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('owner.laporan.bulanan') }}" class="{{ request()->routeIs('owner.laporan.bulanan') ? 'active' : '' }}">
-                        <i class="fas fa-calendar-alt fa-fw"></i> Laporan Bulanan
-                    </a>
-                </div>
-            @else
-                <div class="nav-item">
-                    <a href="{{ route('kasir.pos.index') }}" class="{{ request()->routeIs('kasir.pos.*') ? 'active' : '' }}">
-                        <i class="fas fa-cash-register fa-fw"></i> POS
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('kasir.transaksi.index') }}" class="{{ request()->routeIs('kasir.transaksi.*') ? 'active' : '' }}">
-                        <i class="fas fa-receipt fa-fw"></i> Riwayat Transaksi
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ route('kasir.laporan.index') }}" class="{{ request()->routeIs('kasir.laporan.*') ? 'active' : '' }}">
-                        <i class="fas fa-file-alt fa-fw"></i> Laporan
-                    </a>
-                </div>
-            @endif
+           @if(auth()->user()->isOwner())
+    <div class="nav-item">
+        <a href="{{ route('owner.dashboard') }}" class="{{ request()->routeIs('owner.dashboard') ? 'active' : '' }}">
+            <i class="fas fa-chart-line fa-fw"></i> Dashboard
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.users.index') }}" class="{{ request()->routeIs('owner.users.*') ? 'active' : '' }}">
+            <i class="fas fa-users fa-fw"></i> Users
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.kategori.index') }}" class="{{ request()->routeIs('owner.kategori.*') ? 'active' : '' }}">
+            <i class="fas fa-tags fa-fw"></i> Kategori
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.menu.index') }}" class="{{ request()->routeIs('owner.menu.*') ? 'active' : '' }}">
+            <i class="fas fa-coffee fa-fw"></i> Menu
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.bahan-baku.index') }}" class="{{ request()->routeIs('owner.bahan-baku.*') ? 'active' : '' }}">
+            <i class="fas fa-box fa-fw"></i> Bahan Baku
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.resep.index') }}" class="{{ request()->routeIs('owner.resep.*') ? 'active' : '' }}">
+            <i class="fas fa-scroll fa-fw"></i> Resep (BOM)
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.riwayat-stok.index') }}" class="{{ request()->routeIs('owner.riwayat-stok.*') ? 'active' : '' }}">
+            <i class="fas fa-history fa-fw"></i> Riwayat Stok
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.laporan.index') }}" class="{{ request()->routeIs('owner.laporan.index') ? 'active' : '' }}">
+            <i class="fas fa-file-alt fa-fw"></i> Laporan
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.laporan.bulanan') }}" class="{{ request()->routeIs('owner.laporan.bulanan') ? 'active' : '' }}">
+            <i class="fas fa-calendar-alt fa-fw"></i> Laporan Bulanan
+        </a>
+    </div>
+
+@elseif(auth()->user()->isAdmin())
+    <div class="nav-item">
+        <a href="{{ route('owner.menu.index') }}" class="{{ request()->routeIs('owner.menu.*') ? 'active' : '' }}">
+            <i class="fas fa-coffee fa-fw"></i> Menu
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.kategori.index') }}" class="{{ request()->routeIs('owner.kategori.*') ? 'active' : '' }}">
+            <i class="fas fa-tags fa-fw"></i> Kategori
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.bahan-baku.index') }}" class="{{ request()->routeIs('owner.bahan-baku.*') ? 'active' : '' }}">
+            <i class="fas fa-box fa-fw"></i> Bahan Baku
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.resep.index') }}" class="{{ request()->routeIs('owner.resep.*') ? 'active' : '' }}">
+            <i class="fas fa-scroll fa-fw"></i> Resep (BOM)
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('owner.riwayat-stok.index') }}" class="{{ request()->routeIs('owner.riwayat-stok.*') ? 'active' : '' }}">
+            <i class="fas fa-history fa-fw"></i> Riwayat Stok
+        </a>
+    </div>
+
+@else
+    <div class="nav-item">
+        <a href="{{ route('kasir.pos.index') }}" class="{{ request()->routeIs('kasir.pos.*') ? 'active' : '' }}">
+            <i class="fas fa-cash-register fa-fw"></i> POS
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('kasir.transaksi.index') }}" class="{{ request()->routeIs('kasir.transaksi.*') ? 'active' : '' }}">
+            <i class="fas fa-receipt fa-fw"></i> Riwayat Transaksi
+        </a>
+    </div>
+    <div class="nav-item">
+        <a href="{{ route('kasir.laporan.index') }}" class="{{ request()->routeIs('kasir.laporan.*') ? 'active' : '' }}">
+            <i class="fas fa-file-alt fa-fw"></i> Laporan
+        </a>
+    </div>
+@endif
         </nav>
 
         <div class="user-info">

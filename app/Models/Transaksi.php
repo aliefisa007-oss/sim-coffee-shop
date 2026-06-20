@@ -17,6 +17,7 @@ class Transaksi extends Model
         'nomor_transaksi', 'user_id', 'tanggal',
         'metode_bayar', 'subtotal', 'diskon',
         'pajak', 'total', 'catatan', 'status',
+        'alasan_batal', 'dibatalkan_at', 'dibatalkan_oleh',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class Transaksi extends Model
             'diskon'   => 'decimal:2',
             'pajak'    => 'decimal:2',
             'total'    => 'decimal:2',
+            'dibatalkan_at' => 'datetime',
         ];
     }
 
@@ -72,5 +74,10 @@ class Transaksi extends Model
         $tanggal = now()->format('Ymd');
         $last    = static::whereDate('tanggal', today())->count() + 1;
         return sprintf('%s-%s-%03d', $prefix, $tanggal, $last);
+    }
+
+    public function dibatalkanOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dibatalkan_oleh');
     }
 }

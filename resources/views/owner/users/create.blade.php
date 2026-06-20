@@ -44,6 +44,7 @@
                     <label style="font-size:11px; color:#888; text-transform:uppercase;">Role</label>
                     <select name="role" class="form-select mt-1" required>
                         <option value="kasir" {{ old('role') === 'kasir' ? 'selected' : '' }}>Kasir</option>
+                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="owner" {{ old('role') === 'owner' ? 'selected' : '' }}>Owner</option>
                     </select>
                 </div>
