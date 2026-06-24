@@ -345,9 +345,321 @@
             background: #23262f;
             color: var(--gold);
         }
+
+        /* ── TABLET RESPONSIVE ── */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 60px !important;
+        overflow: hidden;
+        transition: width 0.3s ease;
+    }
+
+    .sidebar:hover {
+        width: 220px !important;
+    }
+
+    .sidebar-logo .brand,
+    .sidebar-logo .sub,
+    .nav-item a span,
+    .user-info .user-name,
+    .user-info .user-role,
+    .user-info button,
+    .nav-item a > *:not(i) {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .sidebar:hover .sidebar-logo .brand,
+    .sidebar:hover .sidebar-logo .sub,
+    .sidebar:hover .nav-item a span,
+    .sidebar:hover .user-info .user-name,
+    .sidebar:hover .user-info .user-role,
+    .sidebar:hover .user-info button,
+    .sidebar:hover .nav-item a > *:not(i) {
+        opacity: 1;
+    }
+
+    .sidebar-logo {
+        padding: 14px 8px !important;
+        justify-content: center;
+    }
+
+    .sidebar-logo img {
+        margin: 0 auto;
+    }
+
+    .nav-item a {
+        padding: 10px 0 !important;
+        justify-content: center;
+    }
+
+    .sidebar:hover .nav-item a {
+        padding: 9px 16px !important;
+        justify-content: flex-start;
+    }
+
+    .nav-item a i {
+        font-size: 18px !important;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .sidebar:hover .nav-item a i {
+        min-width: auto;
+        font-size: 14px !important;
+    }
+
+    .user-info {
+        padding: 8px 4px !important;
+        display: flex;
+        justify-content: center;
+    }
+
+    .sidebar:hover .user-info {
+        padding: 12px 14px !important;
+        display: block;
+    }
+
+    .user-avatar {
+        margin: 0 auto;
+    }
+
+    .main-content {
+        margin-left: 60px !important;
+        transition: margin-left 0.3s ease;
+    }
+}
+
+/* ── DARK / LIGHT THEME ── */
+body.light-mode {
+    --bg-main: #f0f2f5;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --border: #e2e8f0;
+    --text: #1a202c;
+    --muted: #718096;
+    background: var(--bg-main);
+    color: var(--text);
+}
+
+body.light-mode .sidebar {
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+}
+
+body.light-mode .sidebar-logo .brand { color: #2d6a4f; }
+body.light-mode .nav-item a { color: #718096; }
+body.light-mode .nav-item a:hover,
+body.light-mode .nav-item a.active {
+    color: #2d6a4f;
+    background: rgba(45,106,79,0.08);
+    border-left-color: #2d6a4f;
+}
+
+body.light-mode .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+body.light-mode .topbar-title { color: #1a202c; }
+body.light-mode .topbar-right { color: #718096; }
+
+body.light-mode .stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+body.light-mode .chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+body.light-mode .stat-label { color: #718096; }
+body.light-mode .stat-value { color: #1a202c; }
+body.light-mode .stat-sub { color: #a0aec0; }
+body.light-mode .chart-title { color: #2d6a4f; }
+
+body.light-mode .table-dark-custom th {
+    color: #718096;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+body.light-mode .table-dark-custom td {
+    color: #2d3748;
+    border-bottom: 1px solid #f7fafc;
+}
+
+body.light-mode .table-dark-custom tbody tr:hover td {
+    background: #f7fafc;
+}
+
+body.light-mode .form-control,
+body.light-mode .form-select {
+    background: #f7fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #2d3748 !important;
+}
+
+body.light-mode .form-control:focus,
+body.light-mode .form-select:focus {
+    border-color: #2d6a4f !important;
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.1) !important;
+}
+
+body.light-mode .alert-row {
+    background: #f0fff4;
+    border: 1px solid #c6f6d5;
+}
+
+body.light-mode .user-info { border-top: 1px solid #e2e8f0; }
+
+/* ── THEME TOGGLE BUTTON ── */
+.theme-toggle {
+    width: 36px;
+    height: 20px;
+    background: #2a2d38;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.theme-toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #888;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: all 0.3s;
+}
+
+body.light-mode .theme-toggle {
+    background: #2d6a4f;
+}
+
+body.light-mode .theme-toggle::after {
+    left: 19px;
+    background: #ffffff;
+}
+
+/* ── GLASS EFFECT (light mode) ── */
+body.light-mode .sidebar {
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+body.light-mode .topbar {
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── POS MENU LIGHT MODE ── */
+
+body.light-mode .menu-card,
+body.light-mode .product-card,
+body.light-mode .item-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+
+body.light-mode .menu-card h3,
+body.light-mode .product-card h3,
+body.light-mode .item-card h3 {
+    color: #1a202c !important;
+}
+
+
+body.light-mode .menu-card p,
+body.light-mode .product-card p,
+body.light-mode .item-card p {
+    color: #718096 !important;
+}
+
+
+/* kategori */
+body.light-mode .category-btn {
+    background: #ffffff;
+    color: #1a202c;
+    border-color: #e2e8f0;
+}
+
+
+body.light-mode .category-btn.active {
+    background: #2d6a4f;
+    color: white;
+}
+
+
+/* harga */
+body.light-mode .price {
+    color: #d69e2e !important;
+}
+
+
+/* keranjang kanan */
+body.light-mode .cart-panel {
+    background: rgba(255,255,255,0.85);
+    border:1px solid #e2e8f0;
+}
+
+
+body.light-mode .cart-panel * {
+    color:#1a202c;
+}
     </style>
     @stack('styles')
 </head>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const theme = localStorage.getItem('theme');
+
+        if (theme === 'light') {
+            document.body.classList.add('light-mode');
+        }
+
+    });
+
+
+    function toggleTheme(){
+
+        document.body.classList.toggle('light-mode');
+
+
+        if(document.body.classList.contains('light-mode')){
+            localStorage.setItem('theme','light');
+        }else{
+            localStorage.setItem('theme','dark');
+        }
+
+    }
+</script>
+
+// Load saved theme
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.body.classList.add('light-mode');
+    }
+})();
+</script>
 <body>
 <div class="layout-wrapper">
 
@@ -490,15 +802,22 @@
     <div class="main-content">
 
         {{-- Topbar --}}
-        <div class="topbar">
-            <div class="topbar-title">@yield('page-title')</div>
-            <div class="topbar-right">
-                <span>{{ now()->format('d M Y') }}</span>
-                <span style="padding:3px 10px; border-radius:10px; background:rgba(200,169,126,0.12); color:#c8a97e; font-size:11px; font-weight:600; text-transform:uppercase;">
-                    {{ auth()->user()->role }}
-                </span>
-            </div>
+       <div class="topbar">
+    <div class="topbar-title">@yield('page-title')</div>
+    <div class="topbar-right d-flex align-items-center gap-3">
+        <span>{{ now()->format('d M Y') }}</span>
+        <span style="padding:3px 10px; border-radius:10px; background:rgba(200,169,126,0.12); color:#c8a97e; font-size:11px; font-weight:600; text-transform:uppercase;">
+            {{ auth()->user()->role }}
+        </span>
+
+        {{-- Theme Toggle --}}
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px;" id="themeIcon">🌙</span>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Switch Theme"></button>
+            <span style="font-size:11px;">☀️</span>
         </div>
+    </div>
+</div>
 
         {{-- Flash Messages --}}
         @if(session('success'))

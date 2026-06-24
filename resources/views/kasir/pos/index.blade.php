@@ -53,6 +53,20 @@
             <div style="display:flex; justify-content:space-between; font-size:12px; color:#888; margin-bottom:8px;"><span>Pajak (10%)</span><span id="pajak">Rp 0</span></div>
             <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; padding-top:8px; border-top:1px solid #23262f; margin-bottom:14px;">
                 <span>Total</span><span id="total" style="color:#c8a97e;">Rp 0</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <span style="font-size:12px; color:#888;">
+        Diskon
+    </span>
+
+    <input 
+        type="number" 
+        id="diskonInput"
+        value="0"
+        min="0"
+        style="width:80px; background:#0f1117; border:1px solid #2a2d38; color:#fff; border-radius:6px; padding:5px;"
+        oninput="renderCart()"
+    >
+</div>
             </div>
             {{-- Catatan --}}
 <div style="margin-bottom:12px;">
@@ -158,11 +172,19 @@ function renderCart() {
 }
 
 function updateTotals(subtotal) {
+
+    const diskon = Number(document.getElementById('diskonInput')?.value || 0);
+
     const pajak = Math.round(subtotal * 0.1);
-    const total  = subtotal + pajak;
+
+    const total = subtotal - diskon + pajak;
+
+
     document.getElementById('subtotal').textContent = fmt(subtotal);
-    document.getElementById('pajak').textContent    = fmt(pajak);
-    document.getElementById('total').textContent    = fmt(total);
+
+    document.getElementById('pajak').textContent = fmt(pajak);
+
+    document.getElementById('total').textContent = fmt(total);
 }
 
 function setMetode(m) {
@@ -204,7 +226,8 @@ function bayar() {
 
     const subtotal = items.reduce((s, i) => s + i.harga * i.qty, 0);
     const pajak    = Math.round(subtotal * 0.1);
-    const total    = subtotal + pajak;
+    const diskon = Number(document.getElementById('diskonInput').value || 0);
+    const total = subtotal - diskon + pajak;
     const catatan  = document.getElementById('catatanInput')
                      ? document.getElementById('catatanInput').value
                      : '';
@@ -219,6 +242,7 @@ function bayar() {
         })),
         metode_bayar: metodeBayar,
         pajak:        pajak,
+        diskon: diskon,
         catatan:      catatan,
     };
 
