@@ -58,14 +58,20 @@
         Diskon
     </span>
 
+    <div>
+    <label>Diskon (%)</label>
+
     <input 
-        type="number" 
+        type="number"
         id="diskonInput"
         value="0"
         min="0"
-        style="width:80px; background:#0f1117; border:1px solid #2a2d38; color:#fff; border-radius:6px; padding:5px;"
-        oninput="renderCart()"
-    >
+        max="100"
+        style="width:80px"
+        oninput="renderCart()">
+
+</div>
+
 </div>
             </div>
             {{-- Catatan --}}
@@ -173,7 +179,13 @@ function renderCart() {
 
 function updateTotals(subtotal) {
 
-    const diskon = Number(document.getElementById('diskonInput')?.value || 0);
+    const diskonPersen = Number(
+    document.getElementById('diskonInput').value || 0
+);
+
+const diskon = Math.round(
+    subtotal * diskonPersen / 100
+);
 
     const pajak = Math.round(subtotal * 0.1);
 
@@ -226,7 +238,10 @@ function bayar() {
 
     const subtotal = items.reduce((s, i) => s + i.harga * i.qty, 0);
     const pajak    = Math.round(subtotal * 0.1);
-    const diskon = Number(document.getElementById('diskonInput').value || 0);
+    const diskonPersen = Number(
+    document.getElementById('diskonInput').value || 0);
+    const diskon = Math.round(
+    subtotal * diskonPersen / 100);
     const total = subtotal - diskon + pajak;
     const catatan  = document.getElementById('catatanInput')
                      ? document.getElementById('catatanInput').value

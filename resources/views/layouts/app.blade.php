@@ -652,6 +652,7 @@ body.light-mode .cart-panel * {
     }
 </script>
 
+<script>
 // Load saved theme
 (function() {
     const saved = localStorage.getItem('theme');
