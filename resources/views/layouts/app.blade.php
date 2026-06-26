@@ -73,7 +73,10 @@
         .sidebar nav {
             flex: 1;
             padding: 8px 0;
+            overflow-y: auto;
+            min-height: 0;
         }
+
 
         .nav-item a {
             display: flex;
