@@ -7,17 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     public function up(): void
-    {
-        Schema::table('transaksi', function (Blueprint $table) {
+{
+    Schema::table('transaksi', function (Blueprint $table) {
+        if (!Schema::hasColumn('transaksi', 'alasan_batal')) {
             $table->text('alasan_batal')->nullable()->after('status');
-            $table->timestamp('dibatalkan_at')->nullable()->after('alasan_batal');
-            $table->foreignId('dibatalkan_oleh')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete()
-                  ->after('dibatalkan_at');
-        });
-    }
+        }
+        if (!Schema::hasColumn('transaksi', 'dibatal_oleh')) {
+            $table->string('dibatal_oleh')->nullable()->after('alasan_batal');
+        }
+    });
+}
 
     public function down(): void
     {
