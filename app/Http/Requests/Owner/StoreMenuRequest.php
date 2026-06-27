@@ -8,7 +8,7 @@ class StoreMenuRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()->isOwner();
+        return auth()->user()->isOwner() || auth()->user()->isAdmin();
     }
 
     public function rules(): array
