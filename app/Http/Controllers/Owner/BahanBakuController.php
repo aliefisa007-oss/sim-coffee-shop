@@ -26,27 +26,6 @@ class BahanBakuController extends Controller
         return back()->with('success', 'Bahan baku berhasil ditambahkan.');
     }
 
-    public function update(Request $request, int $id)
-{
-    $request->validate([
-        'kode_bahan'       => ['required', 'string', 'max:10', 'unique:bahan_baku,kode_bahan,' . $id],
-        'nama_bahan'       => ['required', 'string', 'max:150'],
-        'satuan'           => ['required', 'in:gram,ml,pcs,botol'],
-        'stok_minimum'     => ['required', 'numeric', 'min:0'],
-        'harga_per_satuan' => ['required', 'numeric', 'min:0'],
-    ]);
-
-    $this->repo->update($id, $request->only([
-        'kode_bahan',
-        'nama_bahan',
-        'satuan',
-        'stok_minimum',
-        'harga_per_satuan',
-    ]));
-
-    return back()->with('success', 'Bahan baku berhasil diperbarui.');
-}
-
    public function destroy(int $id)
 {
     $bahan = $this->repo->findById($id);
