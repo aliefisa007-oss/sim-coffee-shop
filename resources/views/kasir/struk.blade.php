@@ -320,32 +320,65 @@
         }
 
         /* ── PRINT STYLES ── */
-        @media print {
-            body {
-                background: #fff;
-                padding: 0;
-                display: block;
-            }
+@media print {
 
-            .receipt-wrapper {
-                box-shadow: none;
-                border-radius: 0;
-                width: 100%;
-                padding: 8px 10px;
-            }
+ * {
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+    }
+    .payment-method-badge {
+        background: #000 !important;
+        color: #fff !important;
+    }
+    .kembalian-row { color: #000 !important; }
+    .payment-row.discount { color: #000 !important; }
+    .footer-hashtag { color: #000 !important; }
+    
+    /* kode existing lainnya tetap */
+}
 
-            .receipt-wrapper::before { display: none; }
-            .action-buttons { display: none !important; }
+    html, body {
+        width: 58mm;
+        margin: 0;
+        padding: 0;
+    }
 
-            /* 58mm thermal */
-            @page {
-                size: 58mm auto;
-                margin: 2mm;
-            }
+    body {
+        background: #fff;
+        display: block;
+    }
 
-            .cafe-name { font-size: 14px; }
-            .total-row .total-value { font-size: 14px; }
-        }
+    .receipt-wrapper {
+        box-shadow: none;
+        border-radius: 0;
+        width: 58mm;
+        max-width: 58mm;
+        padding: 5px;
+        margin: 0;
+    }
+
+    .receipt-wrapper::before {
+        display: none;
+    }
+
+    .action-buttons {
+        display: none !important;
+    }
+
+    @page {
+        size: 58mm auto;
+        margin: 0;
+    }
+
+    .cafe-name {
+        font-size: 14px;
+    }
+
+    .total-row .total-value {
+        font-size: 14px;
+    }
+
+    
     </style>
 </head>
 <body>
@@ -503,11 +536,8 @@ function downloadPDF() {
     window.print();
 }
 
-// Auto print kalau dibuka dari POS
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('autoprint') === '1') {
-    window.onload = () => setTimeout(() => window.print(), 500);
-}
+// Auto print langsung tanpa preview
+window.onload = () => setTimeout(() => window.print(), 600);
 </script>
 
 </body>
