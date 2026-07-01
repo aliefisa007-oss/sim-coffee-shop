@@ -11,4 +11,6 @@ interface BahanBakuRepositoryInterface
     public function delete(int $id);
     public function getMenipis();
     public function updateStok(int $id, float $stok);
+    public function getTopFastMoving(int $limit = 10, int $hari = 30);
+    public function getNilaiTotalStok(): float;
 }

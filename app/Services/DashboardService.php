@@ -58,4 +58,17 @@ class DashboardService
         }
         return $data;
     }
+
+    public function getStokDashboard(): array
+    {
+        $stokMenipis = $this->bahanBakuRepo->getMenipis();
+
+        return [
+            'stok_menipis'        => $stokMenipis,
+            'jumlah_stok_menipis' => $stokMenipis->count(),
+            'nilai_total_stok'    => $this->bahanBakuRepo->getNilaiTotalStok(),
+            'top_fast_moving'     => $this->bahanBakuRepo->getTopFastMoving(10, 30),
+            'top_menu'            => $this->transaksiRepo->getTopMenu(10),
+        ];
+    }
 }

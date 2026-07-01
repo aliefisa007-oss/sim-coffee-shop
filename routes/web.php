@@ -11,6 +11,7 @@ use App\Http\Controllers\Owner\ResepProdukController;
 use App\Http\Controllers\Owner\StokController;
 use App\Http\Controllers\Owner\RiwayatStokController;
 use App\Http\Controllers\Owner\LaporanController;
+use App\Http\Controllers\Owner\StokDashboardController;
 use App\Http\Controllers\Kasir\POSController;
 use App\Http\Controllers\Kasir\TransaksiController;
 
@@ -24,6 +25,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // OWNER
 Route::middleware(['auth', 'role:owner,admin'])->prefix('owner')->name('owner.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard-stok', [StokDashboardController::class, 'index'])->name('dashboard-stok');
     Route::resource('users', UserController::class);
     Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
     Route::resource('kategori', KategoriMenuController::class);

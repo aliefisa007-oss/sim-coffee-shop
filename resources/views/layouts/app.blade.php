@@ -692,6 +692,11 @@ body.light-mode .cart-panel * {
         </a>
     </div>
     <div class="nav-item">
+        <a href="{{ route('owner.dashboard-stok') }}" class="{{ request()->routeIs('owner.dashboard-stok') ? 'active' : '' }}">
+            <i class="fas fa-warehouse fa-fw"></i> Dashboard Stok
+        </a>
+    </div>
+    <div class="nav-item">
         <a href="{{ route('owner.users.index') }}" class="{{ request()->routeIs('owner.users.*') ? 'active' : '' }}">
             <i class="fas fa-users fa-fw"></i> Users
         </a>
@@ -733,6 +738,11 @@ body.light-mode .cart-panel * {
     </div>
 
 @elseif(auth()->user()->isAdmin())
+    <div class="nav-item">
+        <a href="{{ route('owner.dashboard-stok') }}" class="{{ request()->routeIs('owner.dashboard-stok') ? 'active' : '' }}">
+            <i class="fas fa-warehouse fa-fw"></i> Dashboard Stok
+        </a>
+    </div>
     <div class="nav-item">
         <a href="{{ route('owner.menu.index') }}" class="{{ request()->routeIs('owner.menu.*') ? 'active' : '' }}">
             <i class="fas fa-coffee fa-fw"></i> Menu

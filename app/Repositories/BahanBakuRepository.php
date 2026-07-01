@@ -50,4 +50,25 @@ class BahanBakuRepository implements BahanBakuRepositoryInterface
     {
         return $this->model->where('id', $id)->update(['stok' => $stok]);
     }
+
+    public function getTopFastMoving(int $limit = 10, int $hari = 30)
+{
+    $subquery = \DB::table('riwayat_stok')
+        ->select('bahan_baku_id', \DB::raw('SUM(jumlah) as total_keluar'))
+        ->where('tipe', 'keluar')
+        ->where('created_at', '>=', now()->subDays($hari))
+        ->groupBy('bahan_baku_id');
+
+    return $this->model
+        ->select('bahan_baku.*', \DB::raw('COALESCE(rs.total_keluar, 0) as total_keluar'))
+        ->leftJoinSub($subquery, 'rs', 'rs.bahan_baku_id', '=', 'bahan_baku.id')
+        ->orderByDesc('total_keluar')
+        ->limit($limit)
+        ->get();
+}
+
+    public function getNilaiTotalStok(): float
+    {
+        return (float) $this->model->selectRaw('SUM(stok * harga_per_satuan) as nilai')->value('nilai');
+    }
 }
