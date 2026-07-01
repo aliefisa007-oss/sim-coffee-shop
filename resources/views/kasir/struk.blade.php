@@ -319,66 +319,81 @@
             cursor: pointer;
         }
 
-        /* ── PRINT STYLES ── */
-@media print {
+        /* ═══════════════════════════════════
+           PRINT STYLES — semua dalam 1 blok
+           ═══════════════════════════════════ */
+        @media print {
 
- * {
-        color: #000 !important;
-        -webkit-print-color-adjust: exact;
-    }
-    .payment-method-badge {
-        background: #000 !important;
-        color: #fff !important;
-    }
-    .kembalian-row { color: #000 !important; }
-    .payment-row.discount { color: #000 !important; }
-    .footer-hashtag { color: #000 !important; }
-    
-    /* kode existing lainnya tetap */
-}
+            @page {
+                size: 58mm auto;
+                margin: 0;
+            }
 
-    html, body {
-        width: 58mm;
-        margin: 0;
-        padding: 0;
-    }
+            html, body {
+                width: 58mm;
+                margin: 0;
+                padding: 0;
+                background: #fff;
+                display: block;
+            }
 
-    body {
-        background: #fff;
-        display: block;
-    }
+            /* Sembunyikan tombol */
+            .action-buttons {
+                display: none !important;
+            }
 
-    .receipt-wrapper {
-        box-shadow: none;
-        border-radius: 0;
-        width: 58mm;
-        max-width: 58mm;
-        padding: 5px;
-        margin: 0;
-    }
+            /* Reset wrapper untuk kertas thermal */
+            .receipt-wrapper {
+                box-shadow: none;
+                border-radius: 0;
+                width: 58mm;
+                max-width: 58mm;
+                padding: 4px 6px;
+                margin: 0;
+            }
 
-    .receipt-wrapper::before {
-        display: none;
-    }
+            /* Sembunyikan efek gigi — tidak relevan di kertas */
+            .receipt-wrapper::before {
+                display: none;
+            }
 
-    .action-buttons {
-        display: none !important;
-    }
+            /* ── FIX LOGO: hapus background gelap saat print ── */
+            .logo-area {
+                background: transparent !important;
+                border: 1.5px solid #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-    @page {
-        size: 58mm auto;
-        margin: 0;
-    }
+            .logo-area img {
+                width: 56px !important;
+                height: 56px !important;
+                filter: grayscale(100%);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-    .cafe-name {
-        font-size: 14px;
-    }
+            /* Warna teks — paksa hitam semua */
+            * {
+                color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-    .total-row .total-value {
-        font-size: 14px;
-    }
+            /* Badge metode bayar — tetap hitam solid */
+            .payment-method-badge {
+                background: #000 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-    
+            /* Perkecil font agar muat di 58mm */
+            .cafe-name       { font-size: 13px; }
+            .total-row .total-value { font-size: 13px; }
+            .item-row .item-name    { font-size: 10px; }
+            .info-table             { font-size: 9px; }
+        }
     </style>
 </head>
 <body>
@@ -388,10 +403,10 @@
     {{-- ── HEADER ── --}}
     <div class="header">
         <div class="logo-area">
-    <img src="{{ asset('images/logo.png') }}"
-         alt="Contact Coffee"
-         style="width:64px; height:64px; border-radius:50%; object-fit:cover;">
-</div>
+            <img src="{{ asset('images/logo.png') }}"
+                 alt="Contact Coffee"
+                 style="width:64px; height:64px; border-radius:50%; object-fit:cover;">
+        </div>
         <div class="cafe-name">CONTACT COFFEE<br>& EATERY</div>
         <div class="cafe-tagline">Cozy place • Coffee • Friendliness</div>
         <div class="cafe-info">
@@ -500,7 +515,7 @@
     {{-- ── CATATAN ── --}}
     @if($transaksi->catatan)
     <div class="catatan-box">
-        <div class="catatan-label">📝 Catatan</div>
+        <div class="catatan-label">Catatan</div>
         <div class="catatan-text">{{ $transaksi->catatan }}</div>
     </div>
     @endif
@@ -517,7 +532,7 @@
 
     {{-- ── FOOTER ── --}}
     <div class="footer">
-        <div class="footer-main">Terimakasih sudah mampir ❤️</div>
+        <div class="footer-main">Terimakasih sudah mampir!</div>
         <div class="footer-sub">Sampai jumpa kembali</div>
         <div class="footer-hashtag">#contactpeople</div>
     </div>
@@ -525,18 +540,13 @@
 </div>
 
 {{-- ── ACTION BUTTONS ── --}}
-<div class="action-buttons no-print">
-    <button class="btn-print" onclick="window.print()">🖨️ Cetak Struk</button>
-    <button class="btn-pdf" onclick="downloadPDF()">📄 PDF</button>
-    <button class="btn-close" onclick="window.close()">✕ Tutup</button>
+<div class="action-buttons">
+    <button class="btn-print" onclick="window.print()">Cetak Struk</button>
+    <button class="btn-pdf" onclick="window.print()">PDF</button>
+    <button class="btn-close" onclick="window.close()">Tutup</button>
 </div>
 
 <script>
-function downloadPDF() {
-    window.print();
-}
-
-// Auto print langsung tanpa preview
 window.onload = () => setTimeout(() => window.print(), 600);
 </script>
 
