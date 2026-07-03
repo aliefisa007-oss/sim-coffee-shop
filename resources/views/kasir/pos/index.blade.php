@@ -31,8 +31,12 @@
     </div>
 
     <div style="background:#161920; border:1px solid #23262f; border-radius:12px; display:flex; flex-direction:column; overflow:hidden;">
-        <div style="padding:16px 18px; border-bottom:1px solid #23262f; font-size:13px; font-weight:600; color:#c8a97e; text-transform:uppercase; letter-spacing:0.08em;">
-            🛒 Keranjang <span id="cartCount" style="background:#c8a97e; color:#1a1208; border-radius:10px; padding:1px 8px; font-size:11px; margin-left:6px;">0</span>
+        <div style="padding:16px 18px; border-bottom:1px solid #23262f; font-size:13px; font-weight:600; color:#c8a97e; text-transform:uppercase; letter-spacing:0.08em; display:flex; justify-content:space-between; align-items:center;">
+            <span>🛒 Keranjang <span id="cartCount" style="background:#c8a97e; color:#1a1208; border-radius:10px; padding:1px 8px; font-size:11px; margin-left:6px;">0</span></span>
+            <button onclick="BluetoothPrinter.pairPrinter()" id="btnPairPrinter"
+                    style="background:transparent; border:1px solid #2a2d38; color:#666; font-size:10px; padding:4px 8px; border-radius:6px; cursor:pointer; text-transform:none; letter-spacing:normal; font-weight:500;">
+                🔗 Pasangkan Printer
+            </button>
         </div>
         <div id="cartItems" style="flex:1; overflow-y:auto; padding:12px;">
             <div id="emptyCart" style="text-align:center; color:#444; font-size:12px; margin-top:40px;">
@@ -92,24 +96,35 @@
         <div style="font-size:16px; font-weight:700; color:#3ecf8e; margin-bottom:6px;">Transaksi Berhasil!</div>
         <div id="nomorTrx" style="font-size:12px; color:#888; margin-bottom:4px;"></div>
         <div id="totalTrx" style="font-size:22px; font-weight:700; color:#c8a97e; margin-bottom:20px;"></div>
-        <div style="display:flex; gap:8px;">
-    <button onclick="cetakStruk()"
-            style="flex:1; padding:12px; background:#1a1d27; border:1px solid #c8a97e; border-radius:10px; color:#c8a97e; font-size:13px; font-weight:700; cursor:pointer;">
-        🖨️ Cetak Struk
+        <div id="btPrintStatus" style="font-size:11px; color:#666; margin-bottom:10px; min-height:14px;"></div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+    <button onclick="printViaBluetooth()"
+            style="flex:1; padding:10px; background:#1a1d27; border:1px solid #1a73e8; border-radius:10px; color:#1a73e8; font-size:12px; font-weight:700; cursor:pointer;">
+        🖨️ Print Ulang (Bluetooth)
     </button>
-    <button onclick="transaksiSelesai()"
-            style="flex:1; padding:12px; background:linear-gradient(135deg,#c8a97e,#a87d50); border:none; border-radius:10px; color:#1a1208; font-size:13px; font-weight:700; cursor:pointer;">
-        Transaksi Baru
+    <button onclick="cetakStruk()"
+            style="flex:1; padding:10px; background:#1a1d27; border:1px solid #c8a97e; border-radius:10px; color:#c8a97e; font-size:12px; font-weight:700; cursor:pointer;">
+        Cetak Manual
     </button>
     </div>
+    <button onclick="transaksiSelesai()"
+            style="width:100%; padding:12px; background:linear-gradient(135deg,#c8a97e,#a87d50); border:none; border-radius:10px; color:#1a1208; font-size:13px; font-weight:700; cursor:pointer;">
+        Transaksi Baru
+    </button>
 </div>
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/bluetooth-printer.js') }}"></script>
 <script>
 let cart = {};
 let metodeBayar = 'cash';
 let lastTransaksiId = null;
+let lastDataStruk = null;
+const kasirName = @json(auth()->user()->name);
+const namaToko = 'CONTACT COFFEE & EATERY';
+const alamatToko = 'Jl. Tidar, Kloncing, Sumbersari, Jember';
+const wifiPassword = 'contact24';
 
 const fmt = n => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -276,6 +291,34 @@ function bayar() {
             document.getElementById('nomorTrx').textContent = data.nomor_transaksi;
             document.getElementById('totalTrx').textContent = fmt(data.total);
             document.getElementById('modalSukses').style.display = 'flex';
+
+            // Bangun data struk dari payload yang sama + response server,
+            // tidak perlu request tambahan
+            lastDataStruk = {
+                namaToko: namaToko,
+                alamat: alamatToko,
+                kasir: kasirName,
+                nomorTransaksi: data.nomor_transaksi,
+                tanggal: new Date().toLocaleString('id-ID'),
+                items: payload.items.map(i => ({
+                    nama: i.nama_menu,
+                    qty: i.qty,
+                    harga: i.harga,
+                    subtotal: i.subtotal,
+                })),
+                subtotal: subtotal,
+                diskon: diskon,
+                pajak: pajak,
+                total: data.total,
+                metodeBayar: payload.metode_bayar,
+                catatan: payload.catatan,
+                wifiPassword: wifiPassword,
+            };
+
+            // Auto-print langsung, tanpa perlu klik apa-apa lagi.
+            // Kalau printer belum pernah dipasangkan, ini akan munculkan
+            // popup pilih device sekali (lihat tombol "Pasangkan Printer").
+            printViaBluetooth();
         } else {
             alert('❌ ' + data.message);
         }
@@ -284,6 +327,21 @@ function bayar() {
         console.error(err);
         alert('Terjadi kesalahan. Coba lagi.');
     });
+}
+
+async function printViaBluetooth() {
+    if (!lastDataStruk) return;
+    const statusEl = document.getElementById('btPrintStatus');
+    if (statusEl) statusEl.textContent = '🖨️ Mencetak struk...';
+
+    const ok = await BluetoothPrinter.printReceipt(lastDataStruk);
+
+    if (statusEl) {
+        statusEl.textContent = ok
+            ? '✅ Struk berhasil dicetak'
+            : '⚠️ Gagal print otomatis — coba "Print Ulang" atau "Cetak Manual"';
+        statusEl.style.color = ok ? '#3ecf8e' : '#e07c3a';
+    }
 }
 
 function cetakStruk() {
