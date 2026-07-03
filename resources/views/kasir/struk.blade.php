@@ -542,9 +542,79 @@
 {{-- ── ACTION BUTTONS ── --}}
 <div class="action-buttons">
     <button class="btn-print" onclick="window.print()">Cetak Struk</button>
+    <button class="btn-print" style="background:#1a73e8;" onclick="printViaBluetooth()">🖨️ Print Bluetooth</button>
     <button class="btn-pdf" onclick="window.print()">PDF</button>
     <button class="btn-close" onclick="window.close()">Tutup</button>
 </div>
+
+{{-- Script Web Bluetooth printer --}}
+<script src="{{ asset('js/bluetooth-printer.js') }}"></script>
+
+<script>
+    // Toast sederhana kalau belum ada showToast global di layout kamu.
+    // Kalau struk.blade.php ini dipanggil dari layout yang sudah punya showToast(),
+    // fungsi di bawah ini otomatis tidak dipakai (bluetooth-printer.js akan pakai
+    // showToast yang sudah ada duluan).
+    if (typeof showToast !== 'function') {
+        function showToast(message, type = 'info') {
+            const el = document.createElement('div');
+            el.textContent = message;
+            el.style.cssText = `
+                position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+                background:${type === 'error' ? '#c0392b' : type === 'success' ? '#2e7d32' : '#333'};
+                color:#fff; padding:10px 18px; border-radius:6px; font-size:13px;
+                font-family:sans-serif; z-index:9999; box-shadow:0 2px 10px rgba(0,0,0,0.2);
+            `;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+        }
+    }
+
+    // Bangun dataStruk langsung dari data transaksi yang sudah dirender Blade,
+    // jadi tidak perlu request API tambahan.
+    function buildDataStruk() {
+        return {
+            namaToko: 'CONTACT COFFEE & EATERY',
+            alamat: 'Jl. Tidar, Kloncing, Sumbersari, Jember',
+            kasir: @json($transaksi->user->name),
+            nomorTransaksi: @json($transaksi->nomor_transaksi),
+            tanggal: @json($transaksi->tanggal->format('d/m/Y H:i:s')),
+
+            items: [
+                @foreach($transaksi->detailTransaksi as $detail)
+                {
+                    nama: @json($detail->nama_menu),
+                    qty: {{ $detail->qty }},
+                    harga: {{ (float) $detail->harga_saat_transaksi }},
+                    subtotal: {{ (float) $detail->subtotal }},
+                },
+                @endforeach
+            ],
+
+            subtotal: {{ (float) $transaksi->subtotal }},
+            diskon: {{ (float) $transaksi->diskon }},
+            pajak: {{ (float) $transaksi->pajak }},
+            total: {{ (float) $transaksi->total }},
+            metodeBayar: @json($transaksi->metode_bayar),
+
+            @if($transaksi->metode_bayar === 'cash' && isset($transaksi->uang_bayar) && $transaksi->uang_bayar > 0)
+            uangBayar: {{ (float) $transaksi->uang_bayar }},
+            kembalian: {{ (float) ($transaksi->uang_bayar - $transaksi->total) }},
+            @endif
+
+            @if($transaksi->catatan)
+            catatan: @json($transaksi->catatan),
+            @endif
+
+            wifiPassword: 'contact24',
+        };
+    }
+
+    async function printViaBluetooth() {
+        const dataStruk = buildDataStruk();
+        await BluetoothPrinter.printReceipt(dataStruk);
+    }
+</script>
 
 <script>
 window.onload = () => setTimeout(() => window.print(), 600);
