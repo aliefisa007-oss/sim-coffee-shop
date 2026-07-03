@@ -1,19 +1,29 @@
 /**
  * Web Bluetooth ESC/POS Thermal Printer — SIM Coffee (Contact Coffee & Eatery)
+ * Versi dengan PERSISTENT PAIRING — setelah pairing pertama kali, print
+ * berikutnya otomatis connect tanpa munculin popup pilih device lagi.
  *
  * CARA PAKAI:
  * 1. Include: <script src="{{ asset('js/bluetooth-printer.js') }}"></script>
- * 2. Panggil dari tombol: await BluetoothPrinter.printReceipt(dataStruk)
- *    (lihat contoh mapping data di struk-bluetooth-integration.blade.php)
  *
- * CATATAN PENTING:
- * - Hanya jalan di Chrome/Edge (desktop & Android). TIDAK jalan di Safari/iOS.
- * - Harus HTTPS (kecuali localhost).
- * - Printer harus support BLE (Bluetooth Low Energy), bukan Bluetooth Classic/SPP.
- * - UUID default di bawah ini cocok buat kebanyakan printer thermal generic
- *   (Goojprt, Zjiang, dll). Kalau printer kamu beda merek dan gagal connect,
- *   jalankan BluetoothPrinter.scanServices() di console buat cari UUID yang benar,
- *   lalu ganti SERVICE_UUID & CHARACTERISTIC_UUID di bawah.
+ * 2. SEKALI SAJA di awal (misal tombol terpisah "Pasangkan Printer" di halaman setting kasir):
+ *    await BluetoothPrinter.pairPrinter();
+ *    -> ini yang munculin popup pilih device. WAJIB dipicu oleh klik tombol
+ *       (browser tidak izinkan requestDevice() dipanggil otomatis tanpa klik user).
+ *
+ * 3. Setiap kali print struk (misal langsung setelah bayar):
+ *    await BluetoothPrinter.printReceipt(dataStruk);
+ *    -> otomatis connect ke printer yang sudah dipasangkan sebelumnya, TANPA popup.
+ *    -> kalau belum pernah pairing sama sekali, otomatis fallback ke pairPrinter()
+ *       (jadi baru muncul popup di percobaan print pertama, itu wajar).
+ *
+ * CATATAN:
+ * - Hanya Chrome/Edge (desktop & Android). TIDAK ada di Safari/iOS.
+ * - Harus HTTPS, kecuali localhost.
+ * - Printer harus BLE (Bluetooth Low Energy), bukan Bluetooth Classic/SPP.
+ * - Izin pairing tersimpan per-browser per-domain oleh Chrome sendiri (bukan
+ *   localStorage kita) — kalau ganti browser/device/clear site data, perlu
+ *   pairPrinter() ulang sekali.
  */
 
 const BluetoothPrinter = {
@@ -26,41 +36,96 @@ const BluetoothPrinter = {
   ESC: 0x1b,
   GS: 0x1d,
 
-  async scanAndConnect() {
+  /**
+   * Panggil SEKALI dari klik tombol user (mis. "Pasangkan Printer").
+   * Ini satu-satunya tempat popup pemilihan device muncul.
+   */
+  async pairPrinter() {
     if (!navigator.bluetooth) {
       this._toast('Browser tidak mendukung Web Bluetooth. Pakai Chrome/Edge.', 'error');
       return false;
     }
-
     try {
-      this._toast('🔍 Mencari printer Bluetooth...', 'info');
+      this._toast('🔍 Pilih printer di popup yang muncul...', 'info');
 
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ services: [this.SERVICE_UUID] }],
         optionalServices: [this.SERVICE_UUID],
       });
 
-      this.device.addEventListener('gattserverdisconnected', () => {
-        this._toast('Printer terputus', 'error');
-        this.characteristic = null;
-      });
-
-      const server = await this.device.gatt.connect();
-      const service = await server.getPrimaryService(this.SERVICE_UUID);
-      this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
-
-      this._toast(`✅ Terhubung: ${this.device.name || 'Printer Bluetooth'}`, 'success');
-      return true;
+      const ok = await this._connectToDevice(this.device);
+      if (ok) {
+        this._toast(`✅ Printer dipasangkan: ${this.device.name || 'Bluetooth Printer'}`, 'success');
+        localStorage.setItem('bt_printer_name', this.device.name || '');
+      }
+      return ok;
     } catch (error) {
-      console.error('Bluetooth connect error:', error);
-      this._toast('Gagal menghubungkan printer: ' + error.message, 'error');
+      console.error('Pairing error:', error);
+      this._toast('Gagal memasangkan printer: ' + error.message, 'error');
       return false;
     }
   },
 
+  /**
+   * Coba connect otomatis ke device yang SUDAH pernah diizinkan sebelumnya,
+   * tanpa popup. Return false kalau belum ada device yang pernah dipasangkan.
+   */
+  async autoConnect() {
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) {
+      return false; // browser tidak support getDevices() (persistent permission)
+    }
+    try {
+      const devices = await navigator.bluetooth.getDevices();
+      if (!devices || devices.length === 0) return false;
+
+      // Ambil device pertama yang pernah diizinkan (biasanya cuma ada 1 printer)
+      const target = devices[0];
+      return await this._connectToDevice(target);
+    } catch (error) {
+      console.error('Auto-connect error:', error);
+      return false;
+    }
+  },
+
+  async _connectToDevice(device) {
+    try {
+      this.device = device;
+
+      device.addEventListener('gattserverdisconnected', () => {
+        this._toast('Printer terputus', 'error');
+        this.characteristic = null;
+      });
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(this.SERVICE_UUID);
+      this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
+      return true;
+    } catch (error) {
+      console.error('Connect error:', error);
+      this.characteristic = null;
+      return false;
+    }
+  },
+
+  /**
+   * Dipanggil otomatis secara internal sebelum tiap print. Urutan coba:
+   * 1. Sudah connect di sesi ini? Pakai langsung.
+   * 2. Ada device yang pernah dipasangkan? Auto-connect tanpa popup.
+   * 3. Belum pernah pairing sama sekali? Fallback ke pairPrinter() (munculin popup).
+   */
+  async _ensureConnected() {
+    if (this.characteristic) return true;
+
+    const autoOk = await this.autoConnect();
+    if (autoOk) return true;
+
+    this._toast('Printer belum dipasangkan, silakan pilih printer', 'info');
+    return await this.pairPrinter();
+  },
+
   async scanServices() {
     if (!this.device) {
-      const connected = await this.scanAndConnect().catch(() => false);
+      const connected = await this._ensureConnected();
       if (!connected) return;
     }
     const server = await this.device.gatt.connect();
@@ -74,7 +139,7 @@ const BluetoothPrinter = {
 
   async _write(bytes) {
     if (!this.characteristic) {
-      const ok = await this.scanAndConnect();
+      const ok = await this._ensureConnected();
       if (!ok) throw new Error('Printer belum terhubung');
     }
     const CHUNK_SIZE = 180;
@@ -113,13 +178,13 @@ const BluetoothPrinter = {
    *   namaToko, alamat, kasir, nomorTransaksi, tanggal,
    *   items: [{ nama, qty, harga, subtotal }],
    *   subtotal, diskon, pajak, total,
-   *   metodeBayar, uangBayar, kembalian,   // uangBayar/kembalian hanya kalau cash
+   *   metodeBayar, uangBayar, kembalian,   // optional, hanya kalau cash
    *   catatan,                             // optional
    *   wifiPassword,                        // optional
    * }
    */
   async printReceipt(dataStruk) {
-    const connected = this.characteristic || (await this.scanAndConnect());
+    const connected = await this._ensureConnected();
     if (!connected) return false;
 
     try {
@@ -200,7 +265,6 @@ const BluetoothPrinter = {
       showToast(message, type);
     } else {
       console.log(`[${type}]`, message);
-      alert(message);
     }
   },
 };
