@@ -548,7 +548,7 @@
 </div>
 
 {{-- Script Web Bluetooth printer --}}
-<script src="{{ asset('js/bluetooth-printer.js') }}"></script>
+<script src="{{ asset('js/bluetooth-printer.js') }}?v={{ filemtime(public_path('js/bluetooth-printer.js')) }}"></script>
 
 <script>
     // Toast sederhana kalau belum ada showToast global di layout kamu.

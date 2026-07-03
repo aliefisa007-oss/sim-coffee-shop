@@ -115,7 +115,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/bluetooth-printer.js') }}"></script>
+<script src="{{ asset('js/bluetooth-printer.js') }}?v={{ filemtime(public_path('js/bluetooth-printer.js')) }}"></script>
 <script>
 let cart = {};
 let metodeBayar = 'cash';
