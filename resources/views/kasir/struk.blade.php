@@ -575,17 +575,21 @@
     function buildDataStruk() {
         return {
             namaToko: 'CONTACT COFFEE & EATERY',
+            tagline: 'Cosy place • Coffee • Friendliness',
             alamat: 'Jl. Tidar, Kloncing, Sumbersari, Jember',
+            telepon: '+62821-8734-876',
+            sosmed: '@contact.coffee',
             kasir: @json($transaksi->user->name),
             nomorTransaksi: @json($transaksi->nomor_transaksi),
-            tanggal: @json($transaksi->tanggal->format('d/m/Y H:i:s')),
+            tanggal: @json($transaksi->tanggal->format('d/m/Y')),
+            jam: @json($transaksi->tanggal->format('H:i:s')),
 
             items: [
                 @foreach($transaksi->detailTransaksi as $detail)
                 {
                     nama: @json($detail->nama_menu),
+                    hargaSatuan: {{ (float) $detail->harga_saat_transaksi }},
                     qty: {{ $detail->qty }},
-                    harga: {{ (float) $detail->harga_saat_transaksi }},
                     subtotal: {{ (float) $detail->subtotal }},
                 },
                 @endforeach
@@ -594,6 +598,7 @@
             subtotal: {{ (float) $transaksi->subtotal }},
             diskon: {{ (float) $transaksi->diskon }},
             pajak: {{ (float) $transaksi->pajak }},
+            pajakPersen: 10,
             total: {{ (float) $transaksi->total }},
             metodeBayar: @json($transaksi->metode_bayar),
 

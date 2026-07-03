@@ -123,7 +123,10 @@ let lastTransaksiId = null;
 let lastDataStruk = null;
 const kasirName = @json(auth()->user()->name);
 const namaToko = 'CONTACT COFFEE & EATERY';
+const taglineToko = 'Cosy place • Coffee • Friendliness';
 const alamatToko = 'Jl. Tidar, Kloncing, Sumbersari, Jember';
+const teleponToko = '+62821-8734-876';
+const sosmedToko = '@contact.coffee';
 const wifiPassword = 'contact24';
 
 const fmt = n => 'Rp ' + Number(n).toLocaleString('id-ID');
@@ -294,21 +297,27 @@ function bayar() {
 
             // Bangun data struk dari payload yang sama + response server,
             // tidak perlu request tambahan
+            const now = new Date();
             lastDataStruk = {
                 namaToko: namaToko,
+                tagline: taglineToko,
                 alamat: alamatToko,
+                telepon: teleponToko,
+                sosmed: sosmedToko,
                 kasir: kasirName,
                 nomorTransaksi: data.nomor_transaksi,
-                tanggal: new Date().toLocaleString('id-ID'),
+                tanggal: now.toLocaleDateString('id-ID'),
+                jam: now.toLocaleTimeString('id-ID'),
                 items: payload.items.map(i => ({
                     nama: i.nama_menu,
+                    hargaSatuan: i.harga,
                     qty: i.qty,
-                    harga: i.harga,
                     subtotal: i.subtotal,
                 })),
                 subtotal: subtotal,
                 diskon: diskon,
                 pajak: pajak,
+                pajakPersen: 10,
                 total: data.total,
                 metodeBayar: payload.metode_bayar,
                 catatan: payload.catatan,

@@ -1,29 +1,12 @@
 /**
  * Web Bluetooth ESC/POS Thermal Printer — SIM Coffee (Contact Coffee & Eatery)
- * Versi dengan PERSISTENT PAIRING — setelah pairing pertama kali, print
- * berikutnya otomatis connect tanpa munculin popup pilih device lagi.
+ * Layout dibikin mirip versi RawBT: header 2 baris, info transaksi rapi
+ * kolom kiri-kanan, tabel item, badge metode bayar (reverse/hitam).
+ * Logo & barcode BELUM diimplementasi (nanti menyusul).
  *
- * CARA PAKAI:
- * 1. Include: <script src="{{ asset('js/bluetooth-printer.js') }}"></script>
- *
- * 2. SEKALI SAJA di awal (misal tombol terpisah "Pasangkan Printer" di halaman setting kasir):
- *    await BluetoothPrinter.pairPrinter();
- *    -> ini yang munculin popup pilih device. WAJIB dipicu oleh klik tombol
- *       (browser tidak izinkan requestDevice() dipanggil otomatis tanpa klik user).
- *
- * 3. Setiap kali print struk (misal langsung setelah bayar):
- *    await BluetoothPrinter.printReceipt(dataStruk);
- *    -> otomatis connect ke printer yang sudah dipasangkan sebelumnya, TANPA popup.
- *    -> kalau belum pernah pairing sama sekali, otomatis fallback ke pairPrinter()
- *       (jadi baru muncul popup di percobaan print pertama, itu wajar).
- *
- * CATATAN:
- * - Hanya Chrome/Edge (desktop & Android). TIDAK ada di Safari/iOS.
- * - Harus HTTPS, kecuali localhost.
- * - Printer harus BLE (Bluetooth Low Energy), bukan Bluetooth Classic/SPP.
- * - Izin pairing tersimpan per-browser per-domain oleh Chrome sendiri (bukan
- *   localStorage kita) — kalau ganti browser/device/clear site data, perlu
- *   pairPrinter() ulang sekali.
+ * CARA PAKAI: sama seperti sebelumnya —
+ *   await BluetoothPrinter.pairPrinter();     // sekali saja
+ *   await BluetoothPrinter.printReceipt(data); // tiap transaksi
  */
 
 const BluetoothPrinter = {
@@ -33,13 +16,14 @@ const BluetoothPrinter = {
   SERVICE_UUID: '000018f0-0000-1000-8000-00805f9b34fb',
   CHARACTERISTIC_UUID: '00002af1-0000-1000-8000-00805f9b34fb',
 
+  // Ganti sesuai lebar kertas printer kamu. 58mm dengan font default
+  // biasanya 32 karakter/baris. Kalau teks kepotong/ke-wrap aneh,
+  // coba ganti ke 42 atau 48.
+  CHARS_PER_LINE: 32,
+
   ESC: 0x1b,
   GS: 0x1d,
 
-  /**
-   * Panggil SEKALI dari klik tombol user (mis. "Pasangkan Printer").
-   * Ini satu-satunya tempat popup pemilihan device muncul.
-   */
   async pairPrinter() {
     if (!navigator.bluetooth) {
       this._toast('Browser tidak mendukung Web Bluetooth. Pakai Chrome/Edge.', 'error');
@@ -47,16 +31,13 @@ const BluetoothPrinter = {
     }
     try {
       this._toast('🔍 Pilih printer di popup yang muncul...', 'info');
-
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ services: [this.SERVICE_UUID] }],
         optionalServices: [this.SERVICE_UUID],
       });
-
       const ok = await this._connectToDevice(this.device);
       if (ok) {
         this._toast(`✅ Printer dipasangkan: ${this.device.name || 'Bluetooth Printer'}`, 'success');
-        localStorage.setItem('bt_printer_name', this.device.name || '');
       }
       return ok;
     } catch (error) {
@@ -66,21 +47,12 @@ const BluetoothPrinter = {
     }
   },
 
-  /**
-   * Coba connect otomatis ke device yang SUDAH pernah diizinkan sebelumnya,
-   * tanpa popup. Return false kalau belum ada device yang pernah dipasangkan.
-   */
   async autoConnect() {
-    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) {
-      return false; // browser tidak support getDevices() (persistent permission)
-    }
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
     try {
       const devices = await navigator.bluetooth.getDevices();
       if (!devices || devices.length === 0) return false;
-
-      // Ambil device pertama yang pernah diizinkan (biasanya cuma ada 1 printer)
-      const target = devices[0];
-      return await this._connectToDevice(target);
+      return await this._connectToDevice(devices[0]);
     } catch (error) {
       console.error('Auto-connect error:', error);
       return false;
@@ -90,12 +62,10 @@ const BluetoothPrinter = {
   async _connectToDevice(device) {
     try {
       this.device = device;
-
       device.addEventListener('gattserverdisconnected', () => {
         this._toast('Printer terputus', 'error');
         this.characteristic = null;
       });
-
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(this.SERVICE_UUID);
       this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
@@ -107,18 +77,10 @@ const BluetoothPrinter = {
     }
   },
 
-  /**
-   * Dipanggil otomatis secara internal sebelum tiap print. Urutan coba:
-   * 1. Sudah connect di sesi ini? Pakai langsung.
-   * 2. Ada device yang pernah dipasangkan? Auto-connect tanpa popup.
-   * 3. Belum pernah pairing sama sekali? Fallback ke pairPrinter() (munculin popup).
-   */
   async _ensureConnected() {
     if (this.characteristic) return true;
-
     const autoOk = await this.autoConnect();
     if (autoOk) return true;
-
     this._toast('Printer belum dipasangkan, silakan pilih printer', 'info');
     return await this.pairPrinter();
   },
@@ -160,13 +122,41 @@ const BluetoothPrinter = {
     if (options.align !== undefined) commands.push(this.ESC, 0x61, options.align);
     if (options.bold) commands.push(this.ESC, 0x45, 0x01);
     if (options.large) commands.push(this.GS, 0x21, 0x11);
+    if (options.reverse) commands.push(this.GS, 0x42, 0x01); // white-on-black
 
     const bytes = new Uint8Array([...commands, ...this._textToBytes(text), 0x0a]);
     await this._write(bytes);
 
-    if (options.bold || options.large) {
-      await this._write(new Uint8Array([this.ESC, 0x45, 0x00, this.GS, 0x21, 0x00]));
+    // Reset semua formatting supaya baris berikutnya normal lagi
+    if (options.bold || options.large || options.reverse) {
+      await this._write(
+        new Uint8Array([this.ESC, 0x45, 0x00, this.GS, 0x21, 0x00, this.GS, 0x42, 0x00])
+      );
     }
+  },
+
+  /**
+   * Print 1 baris dengan teks kiri & kanan, dipisah spasi otomatis
+   * sampai penuh lebar kertas. Kalau gabungan kepanjangan, kanan
+   * dipindah ke baris baru sendiri (rata kanan).
+   */
+  async printRow(left, right = '', options = {}) {
+    const width = this.CHARS_PER_LINE;
+    left = String(left);
+    right = String(right);
+
+    if (left.length + right.length + 1 > width) {
+      await this.printText(left, options);
+      await this.printText(right.padStart(width), options);
+      return;
+    }
+
+    const spaces = width - left.length - right.length;
+    await this.printText(left + ' '.repeat(Math.max(spaces, 1)) + right, options);
+  },
+
+  async printDivider(char = '-') {
+    await this.printText(char.repeat(this.CHARS_PER_LINE), { align: 0 });
   },
 
   async cutPaper() {
@@ -175,12 +165,12 @@ const BluetoothPrinter = {
 
   /**
    * dataStruk = {
-   *   namaToko, alamat, kasir, nomorTransaksi, tanggal,
-   *   items: [{ nama, qty, harga, subtotal }],
-   *   subtotal, diskon, pajak, total,
-   *   metodeBayar, uangBayar, kembalian,   // optional, hanya kalau cash
-   *   catatan,                             // optional
-   *   wifiPassword,                        // optional
+   *   namaToko, tagline, alamat, telepon, sosmed,
+   *   kasir, nomorTransaksi, tanggal, jam,
+   *   items: [{ nama, hargaSatuan, qty, subtotal }],
+   *   subtotal, diskon, pajak, pajakPersen, total,
+   *   metodeBayar, uangBayar, kembalian,
+   *   catatan, wifiPassword,
    * }
    */
   async printReceipt(dataStruk) {
@@ -188,61 +178,69 @@ const BluetoothPrinter = {
     if (!connected) return false;
 
     try {
+      // ── Header ──
       await this.printText(dataStruk.namaToko, { align: 1, bold: true, large: true });
+      if (dataStruk.tagline) await this.printText(dataStruk.tagline, { align: 1 });
       if (dataStruk.alamat) await this.printText(dataStruk.alamat, { align: 1 });
-      await this.printText('--------------------------------', { align: 0 });
+      if (dataStruk.telepon || dataStruk.sosmed) {
+        const kontak = [dataStruk.telepon, dataStruk.sosmed].filter(Boolean).join('  ·  ');
+        await this.printText(kontak, { align: 1 });
+      }
+      await this.printDivider();
 
-      await this.printText(`No: ${dataStruk.nomorTransaksi}`, { align: 0 });
-      await this.printText(`${dataStruk.tanggal}`, { align: 0 });
-      await this.printText(`Kasir: ${dataStruk.kasir}`, { align: 0 });
-      await this.printText('--------------------------------', { align: 0 });
+      // ── Info transaksi (kolom kiri-kanan) ──
+      await this.printRow('No. Transaksi', dataStruk.nomorTransaksi);
+      await this.printRow('Tanggal', dataStruk.tanggal);
+      if (dataStruk.jam) await this.printRow('Jam', dataStruk.jam);
+      await this.printRow('Kasir', dataStruk.kasir);
+      await this.printRow('Metode Bayar', dataStruk.metodeBayar.toUpperCase());
+      await this.printDivider();
 
+      // ── Tabel item ──
+      await this.printRow('ITEM', 'QTY   TOTAL', { bold: true });
       for (const item of dataStruk.items) {
         await this.printText(item.nama, { align: 0 });
-        await this.printText(
-          `  ${item.qty} x ${item.harga.toLocaleString('id-ID')} = ${item.subtotal.toLocaleString('id-ID')}`,
-          { align: 0 }
-        );
+        const hargaLabel = `Rp ${item.hargaSatuan.toLocaleString('id-ID')} / pcs`;
+        const qtyTotal = `${item.qty}x  Rp ${item.subtotal.toLocaleString('id-ID')}`;
+        await this.printRow(hargaLabel, qtyTotal);
       }
-      await this.printText('--------------------------------', { align: 0 });
+      await this.printDivider();
 
-      await this.printText(`Subtotal: Rp ${dataStruk.subtotal.toLocaleString('id-ID')}`, {
-        align: 2,
-      });
-
+      // ── Ringkasan total ──
+      await this.printRow('Subtotal', `Rp ${dataStruk.subtotal.toLocaleString('id-ID')}`);
       if (dataStruk.diskon > 0) {
-        await this.printText(`Diskon: -Rp ${dataStruk.diskon.toLocaleString('id-ID')}`, {
-          align: 2,
-        });
+        await this.printRow('Diskon', `-Rp ${dataStruk.diskon.toLocaleString('id-ID')}`);
       }
-
       if (dataStruk.pajak > 0) {
-        await this.printText(`Pajak: Rp ${dataStruk.pajak.toLocaleString('id-ID')}`, {
-          align: 2,
-        });
+        const label = dataStruk.pajakPersen ? `Pajak (${dataStruk.pajakPersen}%)` : 'Pajak';
+        await this.printRow(label, `Rp ${dataStruk.pajak.toLocaleString('id-ID')}`);
       }
-
-      await this.printText(`TOTAL: Rp ${dataStruk.total.toLocaleString('id-ID')}`, {
-        align: 2,
+      await this.printDivider();
+      await this.printRow('TOTAL', `Rp ${dataStruk.total.toLocaleString('id-ID')}`, {
         bold: true,
+        large: true,
       });
-      await this.printText(`Bayar: ${dataStruk.metodeBayar.toUpperCase()}`, { align: 1 });
 
       if (dataStruk.uangBayar) {
-        await this.printText(`Tunai: Rp ${dataStruk.uangBayar.toLocaleString('id-ID')}`, {
-          align: 2,
-        });
-        await this.printText(`Kembali: Rp ${dataStruk.kembalian.toLocaleString('id-ID')}`, {
-          align: 2,
-        });
+        await this.printRow('Tunai', `Rp ${dataStruk.uangBayar.toLocaleString('id-ID')}`);
+        await this.printRow('Kembali', `Rp ${dataStruk.kembalian.toLocaleString('id-ID')}`);
       }
 
+      // ── Badge metode bayar (reverse video, mirip kotak hitam RawBT) ──
+      await this.printText('');
+      const badge = dataStruk.metodeBayar.toUpperCase();
+      const padded = badge.padStart((this.CHARS_PER_LINE + badge.length) / 2).padEnd(
+        this.CHARS_PER_LINE
+      );
+      await this.printText(padded, { align: 1, reverse: true });
+      await this.printText('');
+
       if (dataStruk.catatan) {
-        await this.printText('--------------------------------', { align: 0 });
+        await this.printDivider();
         await this.printText('Catatan: ' + dataStruk.catatan, { align: 0 });
       }
 
-      await this.printText('--------------------------------', { align: 0 });
+      await this.printDivider();
       if (dataStruk.wifiPassword) {
         await this.printText('WiFi: ' + dataStruk.wifiPassword, { align: 1 });
       }
