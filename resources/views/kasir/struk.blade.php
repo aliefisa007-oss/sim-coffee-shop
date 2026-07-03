@@ -575,7 +575,7 @@
     function buildDataStruk() {
         return {
             namaToko: 'CONTACT COFFEE & EATERY',
-            tagline: 'Cosy place • Coffee • Friendliness',
+            tagline: 'Cozy Place - Coffee - Friendliness',
             alamat: 'Jl. Tidar, Kloncing, Sumbersari, Jember',
             telepon: '+62821-8734-876',
             sosmed: '@contact.coffee',

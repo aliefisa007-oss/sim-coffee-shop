@@ -182,10 +182,8 @@ const BluetoothPrinter = {
       await this.printText(dataStruk.namaToko, { align: 1, bold: true, large: true });
       if (dataStruk.tagline) await this.printText(dataStruk.tagline, { align: 1 });
       if (dataStruk.alamat) await this.printText(dataStruk.alamat, { align: 1 });
-      if (dataStruk.telepon || dataStruk.sosmed) {
-        const kontak = [dataStruk.telepon, dataStruk.sosmed].filter(Boolean).join('  ·  ');
-        await this.printText(kontak, { align: 1 });
-      }
+      if (dataStruk.telepon) await this.printText(dataStruk.telepon, { align: 1 });
+      if (dataStruk.sosmed) await this.printText(dataStruk.sosmed, { align: 1 });
       await this.printDivider();
 
       // ── Info transaksi (kolom kiri-kanan) ──

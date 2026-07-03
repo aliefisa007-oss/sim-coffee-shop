@@ -54,7 +54,6 @@
                 @endforeach
             </div>
             <div style="display:flex; justify-content:space-between; font-size:12px; color:#888; margin-bottom:4px;"><span>Subtotal</span><span id="subtotal">Rp 0</span></div>
-            <div style="display:flex; justify-content:space-between; font-size:12px; color:#888; margin-bottom:8px;"><span>Pajak (10%)</span><span id="pajak">Rp 0</span></div>
             <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; padding-top:8px; border-top:1px solid #23262f; margin-bottom:14px;">
                 <span>Total</span><span id="total" style="color:#c8a97e;">Rp 0</span>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -122,8 +121,10 @@ let metodeBayar = 'cash';
 let lastTransaksiId = null;
 let lastDataStruk = null;
 const kasirName = @json(auth()->user()->name);
+// Ganti angka di bawah ke 10 kalau nanti owner mau aktifkan pajak lagi
+const PAJAK_PERSEN = 0;
 const namaToko = 'CONTACT COFFEE & EATERY';
-const taglineToko = 'Cosy place • Coffee • Friendliness';
+const taglineToko = 'Cozy Place - Coffee - Friendliness';
 const alamatToko = 'Jl. Tidar, Kloncing, Sumbersari, Jember';
 const teleponToko = '+62821-8734-876';
 const sosmedToko = '@contact.coffee';
@@ -205,14 +206,12 @@ const diskon = Math.round(
     subtotal * diskonPersen / 100
 );
 
-    const pajak = Math.round(subtotal * 0.1);
+    const pajak = Math.round(subtotal * PAJAK_PERSEN / 100);
 
     const total = subtotal - diskon + pajak;
 
 
     document.getElementById('subtotal').textContent = fmt(subtotal);
-
-    document.getElementById('pajak').textContent = fmt(pajak);
 
     document.getElementById('total').textContent = fmt(total);
 }
@@ -255,7 +254,7 @@ function bayar() {
     }
 
     const subtotal = items.reduce((s, i) => s + i.harga * i.qty, 0);
-    const pajak    = Math.round(subtotal * 0.1);
+    const pajak    = Math.round(subtotal * PAJAK_PERSEN / 100);
     const diskonPersen = Number(
     document.getElementById('diskonInput').value || 0);
     const diskon = Math.round(
@@ -317,7 +316,7 @@ function bayar() {
                 subtotal: subtotal,
                 diskon: diskon,
                 pajak: pajak,
-                pajakPersen: 10,
+                pajakPersen: PAJAK_PERSEN,
                 total: data.total,
                 metodeBayar: payload.metode_bayar,
                 catatan: payload.catatan,
