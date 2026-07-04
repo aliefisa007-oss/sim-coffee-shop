@@ -579,6 +579,7 @@
             alamat: 'Jl. Tidar, Kloncing, Sumbersari, Jember',
             telepon: '+62821-8734-876',
             sosmed: '@contact.coffee',
+            logoUrl: @json(asset('images/logo.png')),
             kasir: @json($transaksi->user->name),
             nomorTransaksi: @json($transaksi->nomor_transaksi),
             tanggal: @json($transaksi->tanggal->format('d/m/Y')),

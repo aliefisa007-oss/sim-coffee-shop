@@ -129,6 +129,7 @@ const alamatToko = 'Jl. Tidar, Kloncing, Sumbersari, Jember';
 const teleponToko = '+62821-8734-876';
 const sosmedToko = '@contact.coffee';
 const wifiPassword = 'contact24';
+const logoUrlToko = '{{ asset("images/logo.png") }}';
 
 const fmt = n => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -303,6 +304,7 @@ function bayar() {
                 alamat: alamatToko,
                 telepon: teleponToko,
                 sosmed: sosmedToko,
+                logoUrl: logoUrlToko,
                 kasir: kasirName,
                 nomorTransaksi: data.nomor_transaksi,
                 tanggal: now.toLocaleDateString('id-ID'),
