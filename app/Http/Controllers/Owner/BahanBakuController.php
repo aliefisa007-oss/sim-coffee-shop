@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Owner\StoreBahanBakuRequest;
+use App\Http\Requests\Owner\UpdateBahanBakuRequest;
 use App\Repositories\Contracts\BahanBakuRepositoryInterface;
 use Illuminate\Http\Request;
 
@@ -24,6 +25,12 @@ class BahanBakuController extends Controller
     {
         $this->repo->create($request->validated());
         return back()->with('success', 'Bahan baku berhasil ditambahkan.');
+    }
+
+    public function update(UpdateBahanBakuRequest $request, int $id)
+    {
+        $this->repo->update($id, $request->validated());
+        return back()->with('success', 'Bahan baku berhasil diperbarui.');
     }
 
    public function destroy(int $id)

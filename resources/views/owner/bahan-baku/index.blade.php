@@ -67,6 +67,19 @@
     <div class="col-md-8">
         <div class="chart-card">
             <div class="chart-title">🧂 Daftar Bahan Baku</div>
+
+            <form method="GET" action="{{ route('owner.bahan-baku.index') }}" class="mb-3 d-flex gap-2">
+                <input type="text" name="search" value="{{ request('search') }}"
+                       class="form-control" placeholder="Cari kode atau nama bahan...">
+                <button type="submit" class="btn-gold" style="white-space:nowrap; padding-left:16px; padding-right:16px;">Cari</button>
+                @if(request('search'))
+                <a href="{{ route('owner.bahan-baku.index') }}" class="btn"
+                   style="border:1px solid #2a2d38; color:#888; padding:6px 14px; border-radius:8px; text-decoration:none;">
+                   Reset
+                </a>
+                @endif
+            </form>
+
             <table class="table-dark-custom">
                 <thead>
                     <tr>
@@ -110,6 +123,12 @@
                                    style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#5b8dee; font-size:11px; text-decoration:none;">
                                    Riwayat
                                 </a>
+                                <button type="button"
+                                        style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; background:transparent; color:#c8a97e; font-size:11px; cursor:pointer;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editModal{{ $bahan->id }}">
+                                        Edit
+                                </button>
                                 <form method="POST" action="{{ route('owner.bahan-baku.destroy', $bahan->id) }}"
                                       onsubmit="return confirm('Hapus bahan baku ini?')">
                                     @csrf @method('DELETE')
@@ -134,4 +153,62 @@
         </div>
     </div>
 </div>
+
+@foreach($bahanBaku as $bahan)
+<div class="modal fade" id="editModal{{ $bahan->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#1a1c24; border:1px solid #2a2d38; color:#eee;">
+            <form method="POST" action="{{ route('owner.bahan-baku.update', $bahan->id) }}">
+                @csrf
+                @method('PUT')
+                <div class="modal-header" style="border-bottom:1px solid #2a2d38;">
+                    <h5 class="modal-title">Edit Bahan Baku — {{ $bahan->nama_bahan }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label style="font-size:11px; color:#888; text-transform:uppercase;">Kode Bahan</label>
+                        <input type="text" name="kode_bahan" class="form-control mt-1"
+                               value="{{ $bahan->kode_bahan }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size:11px; color:#888; text-transform:uppercase;">Nama Bahan</label>
+                        <input type="text" name="nama_bahan" class="form-control mt-1"
+                               value="{{ $bahan->nama_bahan }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size:11px; color:#888; text-transform:uppercase;">Satuan</label>
+                        <select name="satuan" class="form-select mt-1" required>
+                            @foreach(['gram' => 'Gram', 'ml' => 'ML', 'pcs' => 'PCS', 'botol' => 'Botol'] as $val => $label)
+                                <option value="{{ $val }}" @selected($bahan->satuan === $val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size:11px; color:#888; text-transform:uppercase;">Stok Minimum</label>
+                        <input type="number" name="stok_minimum" class="form-control mt-1"
+                               value="{{ $bahan->stok_minimum }}" step="0.01" min="0" required>
+                        <div style="font-size:10px; color:#555; margin-top:4px;">
+                            Batas stok yang memicu status "Menipis".
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size:11px; color:#888; text-transform:uppercase;">Harga Beli per Satuan (Rp)</label>
+                        <input type="number" name="harga_per_satuan" class="form-control mt-1"
+                               value="{{ $bahan->harga_per_satuan }}" step="0.01" min="0" required>
+                    </div>
+                    <div style="font-size:10px; color:#555;">
+                        Stok saat ini ({{ $bahan->stok }} {{ $bahan->satuan }}) tidak diubah di sini — gunakan tombol
+                        <strong>+ Masuk</strong> / <strong>- Keluar</strong> supaya tercatat di riwayat stok.
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid #2a2d38;">
+                    <button type="button" class="btn" style="border:1px solid #2a2d38; color:#888;" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-gold">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
 @endsection

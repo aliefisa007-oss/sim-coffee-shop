@@ -61,49 +61,6 @@ Route::middleware(['auth', 'role:kasir,owner'])->prefix('kasir')->name('kasir.')
     Route::get('/laporan', [TransaksiController::class, 'laporan'])->name('laporan.index');
 });
 
-// Dashboard - owner only
-Route::get('/dashboard', [DashboardController::class, 'index'])
-     ->name('dashboard')
-     ->middleware('role:owner');
-
-// Users - owner only
-Route::resource('users', UserController::class)
-     ->middleware('role:owner');
-Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])
-     ->name('users.toggle-active')
-     ->middleware('role:owner');
-
-// Laporan - owner only
-Route::get('laporan', [LaporanController::class, 'index'])
-     ->name('laporan.index')
-     ->middleware('role:owner');
-Route::get('laporan/bulanan', [LaporanController::class, 'bulanan'])
-     ->name('laporan.bulanan')
-     ->middleware('role:owner');
-Route::get('laporan/export-pdf', [LaporanController::class, 'exportPdf'])
-     ->name('laporan.export-pdf')
-     ->middleware('role:owner');
-Route::get('laporan/export-excel', [LaporanController::class, 'exportExcel'])
-     ->name('laporan.export-excel')
-     ->middleware('role:owner');
-
-// Owner & Admin bisa akses
-Route::resource('kategori', KategoriMenuController::class);
-Route::resource('menu', MenuController::class);
-Route::patch('menu/{menu}/toggle-status', [MenuController::class, 'toggleStatus'])
-     ->name('menu.toggle-status');
-Route::resource('bahan-baku', BahanBakuController::class);
-Route::get('stok/{bahan}/masuk', [StokController::class, 'masuk'])->name('stok.masuk');
-Route::post('stok/{bahan}/masuk', [StokController::class, 'simpanMasuk'])->name('stok.simpan-masuk');
-Route::get('stok/{bahan}/keluar', [StokController::class, 'keluar'])->name('stok.keluar');
-Route::post('stok/{bahan}/keluar', [StokController::class, 'simpanKeluar'])->name('stok.simpan-keluar');
-Route::resource('resep', ResepProdukController::class);
-Route::get('resep/menu/{menu}', [ResepProdukController::class, 'byMenu'])->name('resep.by-menu');
-Route::get('riwayat-stok', [RiwayatStokController::class, 'index'])->name('riwayat-stok.index');
-Route::get('riwayat-stok/{bahan}', [RiwayatStokController::class, 'byBahan'])->name('riwayat-stok.by-bahan');
-Route::get('transaksi', [TransaksiController::class, 'indexOwner'])->name('transaksi.index');
-Route::get('transaksi/{transaksi}', [TransaksiController::class, 'show'])->name('transaksi.show');
-
 // ROOT
 Route::get('/', function () {
     if (!auth()->check()) return redirect()->route('login');
