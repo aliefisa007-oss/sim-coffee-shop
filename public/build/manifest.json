@@ -1,11 +1,20 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DfGHqKCG.css",
+    "file": "assets/app-uriu7nPP.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
     "names": [
       "app.css"
+    ]
+  },
+  "resources/css/coffee-layout.css": {
+    "file": "assets/coffee-layout-g9oNq0Dl.css",
+    "src": "resources/css/coffee-layout.css",
+    "isEntry": true,
+    "name": "coffee-layout",
+    "names": [
+      "coffee-layout.css"
     ]
   },
   "resources/js/app.js": {
