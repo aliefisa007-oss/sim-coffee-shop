@@ -47,7 +47,7 @@
             <div style="font-size:11px; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.06em;">Metode Bayar</div>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
                 @foreach(['cash' => '💵 Cash', 'qris' => '📱 QRIS', 'transfer' => '🏦 Transfer'] as $val => $label)
-                    <button onclick="setMetode('{{ $val }}')" id="btn-{{ $val }}"
+                    <button onclick="setMetode('{{ $val }}')" id="btn-{{ $val }}" class="pay-btn"
                             style="padding:7px 0; border-radius:8px; border:1px solid {{ $val === 'cash' ? '#c8a97e' : '#2a2d38' }}; background:{{ $val === 'cash' ? 'rgba(200,169,126,0.12)' : 'transparent' }}; color:{{ $val === 'cash' ? '#c8a97e' : '#666' }}; font-size:11px; font-weight:600; cursor:pointer;">
                         {{ $label }}
                     </button>
@@ -82,15 +82,15 @@
     <input type="text" id="catatanInput" placeholder="📝 Catatan (contoh: Dandy/16/outdoor)"
            style="width:100%; background:#0f1117; border:1px solid #2a2d38; color:#e8e6e0; border-radius:8px; padding:8px 12px; font-size:11px; outline:none;">
 </div>
-            <button onclick="bayar()" style="width:100%; padding:12px; background:linear-gradient(135deg,#c8a97e,#a87d50); border:none; border-radius:10px; color:#1a1208; font-size:13px; font-weight:700; cursor:pointer; letter-spacing:0.06em;">
+            <button onclick="bayar()" class="btn-bayar" style="width:100%; padding:12px; background:linear-gradient(135deg,#c8a97e,#a87d50); border:none; border-radius:10px; color:#1a1208; font-size:13px; font-weight:700; cursor:pointer; letter-spacing:0.06em;">
                 BAYAR SEKARANG
             </button>
         </div>
     </div>
 </div>
 
-<div id="modalSukses" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:#1a1d27; border:1px solid #c8a97e44; border-radius:16px; padding:36px 40px; text-align:center; max-width:320px; width:90%;">
+<div id="modalSukses" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div class="modal-success-card" style="background:#1a1d27; border:1px solid #c8a97e44; border-radius:16px; padding:36px 40px; text-align:center; max-width:320px; width:90%;">
         <div style="font-size:48px; margin-bottom:12px;">✅</div>
         <div style="font-size:16px; font-weight:700; color:#3ecf8e; margin-bottom:6px;">Transaksi Berhasil!</div>
         <div id="nomorTrx" style="font-size:12px; color:#888; margin-bottom:4px;"></div>
@@ -168,7 +168,7 @@ function renderCart() {
     let html = '';
     items.forEach(item => {
         html += `
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#1a1d27; border-radius:8px; margin-bottom:6px;">
+        <div class="cart-item-row" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#1a1d27; border-radius:8px; margin-bottom:6px;">
             <div style="font-size:18px;">☕</div>
             <div style="flex:1;">
                 <div style="font-size:12px; font-weight:500; color:#e8e6e0;">${item.nama}</div>
@@ -339,16 +339,19 @@ function bayar() {
     });
 }
 
+// Tiap transaksi selesai, struk otomatis dicetak 3 lembar (rangkap 3).
+const RECEIPT_COPIES = 3;
+
 async function printViaBluetooth() {
     if (!lastDataStruk) return;
     const statusEl = document.getElementById('btPrintStatus');
-    if (statusEl) statusEl.textContent = '🖨️ Mencetak struk...';
+    if (statusEl) statusEl.textContent = `🖨️ Mencetak ${RECEIPT_COPIES} lembar struk...`;
 
-    const ok = await BluetoothPrinter.printReceipt(lastDataStruk);
+    const ok = await BluetoothPrinter.printReceipt(lastDataStruk, RECEIPT_COPIES);
 
     if (statusEl) {
         statusEl.textContent = ok
-            ? '✅ Struk berhasil dicetak'
+            ? `✅ ${RECEIPT_COPIES} lembar struk berhasil dicetak`
             : '⚠️ Gagal print otomatis — coba "Print Ulang" atau "Cetak Manual"';
         statusEl.style.color = ok ? '#3ecf8e' : '#e07c3a';
     }

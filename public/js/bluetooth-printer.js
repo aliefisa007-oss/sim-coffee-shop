@@ -325,10 +325,28 @@ const BluetoothPrinter = {
    * jadi "36000.00" alih-alih "36.000". Convert dengan Number(...) di
    * pemanggil (pos/index.blade.php) sebelum membuat objek ini.
    */
-  async printReceipt(dataStruk) {
+  async printReceipt(dataStruk, copies = 1) {
     const connected = await this._ensureConnected();
     if (!connected) return false;
 
+    const total = Math.max(1, parseInt(copies, 10) || 1);
+    for (let i = 1; i <= total; i++) {
+      const ok = await this._printOneReceipt(dataStruk, i, total);
+      if (!ok) return false;
+    }
+    this._toast(
+      total > 1 ? `✅ Struk berhasil dicetak (${total}x)` : '✅ Struk berhasil dicetak',
+      'success'
+    );
+    return true;
+  },
+
+  /**
+   * Cetak 1 lembar struk fisik (dipanggil `copies` kali oleh printReceipt).
+   * Tiap lembar diakhiri cutPaper sendiri supaya benar-benar terpisah,
+   * bukan 1 gulungan panjang berisi 3 struk nyambung.
+   */
+  async _printOneReceipt(dataStruk, copyIndex = 1, totalCopies = 1) {
     try {
       // ── Logo (opsional) ──
       if (dataStruk.logoUrl) {
@@ -408,10 +426,14 @@ const BluetoothPrinter = {
       }
       await this.printText('Terimakasih sudah mampir!', { align: 1 });
       await this.printText('#contactpeople', { align: 1 });
+      // Penanda copy ke berapa, cuma dicetak kalau lebih dari 1 lembar
+      // (mis. lembar 2/3 untuk pelanggan, 3/3 untuk arsip toko).
+      if (totalCopies > 1) {
+        await this.printText(`(${copyIndex}/${totalCopies})`, { align: 1 });
+      }
       await this.printText('\n\n', { align: 0 });
       await this.cutPaper();
 
-      this._toast('✅ Struk berhasil dicetak', 'success');
       return true;
     } catch (error) {
       console.error('Print error:', error);

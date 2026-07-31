@@ -49,6 +49,26 @@
             padding: 18px 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-logo::before {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background: rgba(200,169,126,0.14);
+            border-radius: 50%;
+            filter: blur(40px);
+            top: -60px;
+            left: -40px;
+            pointer-events: none;
+        }
+
+        .sidebar-logo > * {
+            position: relative;
+            z-index: 1;
         }
 
         .sidebar-logo .brand {
@@ -83,15 +103,30 @@
             text-decoration: none;
             font-size: 13px;
             border-left: 3px solid transparent;
-            transition: all 0.15s;
+            transition: color 0.15s, background 0.2s, border-color 0.15s, transform 0.15s;
             white-space: nowrap;
         }
 
-        .nav-item a:hover,
+        .nav-item a i {
+            transition: transform 0.15s;
+        }
+
+        .nav-item a:hover {
+            color: var(--gold);
+            background: rgba(200,169,126,0.08);
+            border-left-color: var(--gold);
+            transform: translateX(2px);
+        }
+
+        .nav-item a:hover i {
+            transform: scale(1.12);
+        }
+
         .nav-item a.active {
             color: var(--gold);
             background: rgba(200,169,126,0.08);
             border-left-color: var(--gold);
+            box-shadow: inset 0 0 16px rgba(200,169,126,0.12);
         }
 
         .user-info {
@@ -640,4 +675,78 @@ body.light-mode .cart-panel {
 
 body.light-mode .cart-panel * {
     color:#1a202c;
+}
+
+/* ── POS PAGE: micro-interactions ──
+   Catatan: cuma pakai transform & box-shadow di sini, sengaja hindari
+   border/background/color karena properti itu di-toggle langsung lewat
+   inline style oleh JS (kategori aktif, metode bayar aktif). Kalau CSS
+   ikut nyentuh border/background/color, bisa ke-override / tabrakan
+   sama logic JS yang udah jalan. */
+
+.menu-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(200,169,126,0.35);
+}
+
+.filter-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.pay-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.btn-bayar {
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+
+.btn-bayar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(200,169,126,0.3);
+    filter: brightness(1.05);
+}
+
+.btn-bayar:active {
+    transform: translateY(0);
+}
+
+.cart-item-row {
+    transition: background 0.15s, transform 0.15s;
+}
+
+.cart-item-row:hover {
+    background: #20242f !important;
+    transform: translateX(2px);
+}
+
+/* Modal transaksi berhasil: backdrop blur + animasi masuk */
+.modal-overlay {
+    backdrop-filter: blur(4px);
+}
+
+.modal-success-card {
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── MODAL GLOBAL: dipakai di modal custom manapun (kategori, dll) ── */
+.modal-card {
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── MODAL BOOTSTRAP NATIVE: backdrop blur global, kena ke semua modal
+   Bootstrap di seluruh app (misal bahan-baku) tanpa perlu edit per-halaman ── */
+.modal-backdrop.show {
+    backdrop-filter: blur(4px);
+}
+
+.modal.fade .modal-content {
+    border-radius: 14px !important;
 }

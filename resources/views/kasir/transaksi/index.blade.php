@@ -44,16 +44,22 @@
                     @endif
                 </td>
                 <td>
-                    @if($trx->status === 'batal')
-                        <div style="font-size:10px; color:#666; max-width:150px;">
-                            {{ $trx->alasan_batal ?? '-' }}
-                        </div>
-                    @else
-                        <button onclick="showCancelModal({{ $trx->id }}, '{{ $trx->nomor_transaksi }}')"
-                                style="padding:4px 10px; border-radius:6px; border:1px solid #5a2020; background:transparent; color:#e07c7c; font-size:11px; cursor:pointer;">
-                            ✕ Batalkan
-                        </button>
-                    @endif
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('kasir.transaksi.struk', $trx->id) }}" target="_blank"
+                           style="padding:4px 10px; border-radius:6px; border:1px solid #2a2d38; background:transparent; color:#888; font-size:11px; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                            🖨️ Cetak Ulang
+                        </a>
+                        @if($trx->status === 'batal')
+                            <div style="font-size:10px; color:#666; max-width:150px;">
+                                {{ $trx->alasan_batal ?? '-' }}
+                            </div>
+                        @else
+                            <button onclick="showCancelModal({{ $trx->id }}, '{{ $trx->nomor_transaksi }}')"
+                                    style="padding:4px 10px; border-radius:6px; border:1px solid #5a2020; background:transparent; color:#e07c7c; font-size:11px; cursor:pointer;">
+                                ✕ Batalkan
+                            </button>
+                        @endif
+                    </div>
                 </td>
             </tr>
             @empty

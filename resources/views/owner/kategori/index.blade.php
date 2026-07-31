@@ -83,8 +83,8 @@
 </div>
 
 <!-- Modal Edit -->
-<div id="modalEdit" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:#1a1d27; border:1px solid #23262f; border-radius:16px; padding:30px; max-width:400px; width:90%;">
+<div id="modalEdit" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div class="modal-card" style="background:#1a1d27; border:1px solid #23262f; border-radius:16px; padding:30px; max-width:400px; width:90%;">
         <div style="font-size:14px; font-weight:600; color:#c8a97e; margin-bottom:20px;">✏️ Edit Kategori</div>
         <form id="formEdit" method="POST">
             @csrf @method('PUT')
