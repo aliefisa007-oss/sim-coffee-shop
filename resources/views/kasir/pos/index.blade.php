@@ -339,8 +339,8 @@ function bayar() {
     });
 }
 
-// Tiap transaksi selesai, struk otomatis dicetak 3 lembar (rangkap 3).
-const RECEIPT_COPIES = 3;
+// Tiap transaksi selesai, struk otomatis dicetak 2 lembar (rangkap 2).
+const RECEIPT_COPIES = 2;
 
 async function printViaBluetooth() {
     if (!lastDataStruk) return;

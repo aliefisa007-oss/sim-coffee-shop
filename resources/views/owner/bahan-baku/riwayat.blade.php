@@ -38,6 +38,7 @@
                 <th>Sebelum</th>
                 <th>Sesudah</th>
                 <th>Keterangan</th>
+                <th>Oleh</th>
             </tr>
         </thead>
         <tbody>
@@ -58,16 +59,22 @@
                         {{ ucfirst($log->tipe) }}
                     </span>
                 </td>
-                <td style="font-weight:600; color:{{ $log->tipe === 'masuk' ? '#3ecf8e' : '#e07c7c' }};">
-                    {{ $log->tipe === 'masuk' ? '+' : '-' }}{{ $log->jumlah }} {{ $log->bahanBaku->satuan }}
+                @php
+                    $naik = $log->stok_sesudah >= $log->stok_sebelum;
+                @endphp
+                <td style="font-weight:600; color:{{ $naik ? '#3ecf8e' : '#e07c7c' }};">
+                    {{ $naik ? '+' : '-' }}{{ number_format(abs($log->stok_sesudah - $log->stok_sebelum), 2) }} {{ $log->bahanBaku->satuan }}
                 </td>
                 <td style="color:#888;">{{ $log->stok_sebelum }}</td>
                 <td style="color:#c8a97e; font-weight:500;">{{ $log->stok_sesudah }}</td>
                 <td style="color:#666; font-size:11px;">{{ $log->keterangan ?? '-' }}</td>
+                <td style="color:#888; font-size:11px;">
+                    {{ $log->user->name ?? 'Sistem (Otomatis)' }}
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="7" style="text-align:center; color:#555; padding:40px;">Belum ada riwayat stok.</td>
+                <td colspan="8" style="text-align:center; color:#555; padding:40px;">Belum ada riwayat stok.</td>
             </tr>
             @endforelse
         </tbody>

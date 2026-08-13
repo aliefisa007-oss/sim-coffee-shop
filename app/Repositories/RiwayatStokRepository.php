@@ -13,13 +13,19 @@ class RiwayatStokRepository implements RiwayatStokRepositoryInterface
     {
         return $this->model
             ->with(['bahanBaku', 'user'])
-            ->when(isset($filters['bahan_baku_id']), fn($q) =>
+            ->when(!empty($filters['bahan_baku_id']), fn($q) =>
                 $q->where('bahan_baku_id', $filters['bahan_baku_id'])
             )
-            ->when(isset($filters['tipe']), fn($q) =>
+            ->when(!empty($filters['tipe']), fn($q) =>
                 $q->where('tipe', $filters['tipe'])
             )
-            ->latest()->paginate(20);
+            ->when(!empty($filters['dari']), fn($q) =>
+                $q->whereDate('created_at', '>=', $filters['dari'])
+            )
+            ->when(!empty($filters['sampai']), fn($q) =>
+                $q->whereDate('created_at', '<=', $filters['sampai'])
+            )
+            ->latest()->paginate(20)->withQueryString();
     }
 
     public function getByBahan(int $bahanId)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Owner\StokMasukRequest;
+use App\Http\Requests\Owner\StokPenyesuaianRequest;
 use App\Services\StokService;
 use App\Repositories\Contracts\BahanBakuRepositoryInterface;
 
@@ -44,5 +45,23 @@ class StokController extends Controller
         $this->stokService->stokKeluar($bahanId, $request->jumlah, $request->keterangan);
         return redirect()->route('owner.bahan-baku.index')
                          ->with('success', 'Stok berhasil dikurangi.');
+    }
+
+    public function penyesuaian(int $bahanId)
+    {
+        $bahan = $this->bahanBakuRepo->findById($bahanId);
+        return view('owner.stok.penyesuaian', compact('bahan'));
+    }
+
+    public function simpanPenyesuaian(StokPenyesuaianRequest $request, int $bahanId)
+    {
+        $this->stokService->stokPenyesuaian(
+            $bahanId,
+            (float) $request->stok_fisik,
+            $request->keterangan
+        );
+
+        return redirect()->route('owner.bahan-baku.index')
+                         ->with('success', 'Penyesuaian stok berhasil dicatat.');
     }
 }

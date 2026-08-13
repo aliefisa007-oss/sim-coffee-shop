@@ -36,6 +36,8 @@ Route::middleware(['auth', 'role:owner,admin'])->prefix('owner')->name('owner.')
     Route::post('stok/{bahan}/masuk',  [StokController::class, 'simpanMasuk'])->name('stok.simpan-masuk');
     Route::get('stok/{bahan}/keluar',  [StokController::class, 'keluar'])->name('stok.keluar');
     Route::post('stok/{bahan}/keluar', [StokController::class, 'simpanKeluar'])->name('stok.simpan-keluar');
+    Route::get('stok/{bahan}/penyesuaian',  [StokController::class, 'penyesuaian'])->name('stok.penyesuaian');
+    Route::post('stok/{bahan}/penyesuaian', [StokController::class, 'simpanPenyesuaian'])->name('stok.simpan-penyesuaian');
     Route::resource('resep', ResepProdukController::class);
     Route::get('resep/menu/{menu}', [ResepProdukController::class, 'byMenu'])->name('resep.by-menu');
     Route::get('riwayat-stok', [RiwayatStokController::class, 'index'])->name('riwayat-stok.index');

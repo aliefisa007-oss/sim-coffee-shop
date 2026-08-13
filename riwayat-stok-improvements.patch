@@ -1,0 +1,322 @@
+diff --git a/app/Http/Controllers/Owner/StokController.php b/app/Http/Controllers/Owner/StokController.php
+index d24f5b1..d840320 100644
+--- a/app/Http/Controllers/Owner/StokController.php
++++ b/app/Http/Controllers/Owner/StokController.php
+@@ -4,6 +4,7 @@
+ 
+ use App\Http\Controllers\Controller;
+ use App\Http\Requests\Owner\StokMasukRequest;
++use App\Http\Requests\Owner\StokPenyesuaianRequest;
+ use App\Services\StokService;
+ use App\Repositories\Contracts\BahanBakuRepositoryInterface;
+ 
+@@ -45,4 +46,22 @@ public function simpanKeluar(StokMasukRequest $request, int $bahanId)
+         return redirect()->route('owner.bahan-baku.index')
+                          ->with('success', 'Stok berhasil dikurangi.');
+     }
++
++    public function penyesuaian(int $bahanId)
++    {
++        $bahan = $this->bahanBakuRepo->findById($bahanId);
++        return view('owner.stok.penyesuaian', compact('bahan'));
++    }
++
++    public function simpanPenyesuaian(StokPenyesuaianRequest $request, int $bahanId)
++    {
++        $this->stokService->stokPenyesuaian(
++            $bahanId,
++            (float) $request->stok_fisik,
++            $request->keterangan
++        );
++
++        return redirect()->route('owner.bahan-baku.index')
++                         ->with('success', 'Penyesuaian stok berhasil dicatat.');
++    }
+ }
+\ No newline at end of file
+diff --git a/app/Http/Requests/Owner/StokPenyesuaianRequest.php b/app/Http/Requests/Owner/StokPenyesuaianRequest.php
+new file mode 100644
+index 0000000..11ce714
+--- /dev/null
++++ b/app/Http/Requests/Owner/StokPenyesuaianRequest.php
+@@ -0,0 +1,30 @@
++<?php
++
++namespace App\Http\Requests\Owner;
++
++use Illuminate\Foundation\Http\FormRequest;
++
++class StokPenyesuaianRequest extends FormRequest
++{
++    public function authorize(): bool
++    {
++        return auth()->user()->isOwner() || auth()->user()->isAdmin();
++    }
++
++    public function rules(): array
++    {
++        return [
++            'stok_fisik' => ['required', 'numeric', 'min:0'],
++            // Wajib diisi — penyesuaian butuh alasan untuk audit trail,
++            // beda dengan stok masuk/keluar yang keterangannya opsional.
++            'keterangan' => ['required', 'string', 'max:255'],
++        ];
++    }
++
++    public function messages(): array
++    {
++        return [
++            'keterangan.required' => 'Alasan penyesuaian wajib diisi (mis. hasil stock opname, rusak, tumpah, dll).',
++        ];
++    }
++}
+diff --git a/app/Repositories/RiwayatStokRepository.php b/app/Repositories/RiwayatStokRepository.php
+index 45b71a7..0358e67 100644
+--- a/app/Repositories/RiwayatStokRepository.php
++++ b/app/Repositories/RiwayatStokRepository.php
+@@ -13,13 +13,19 @@ public function getAll(array $filters = [])
+     {
+         return $this->model
+             ->with(['bahanBaku', 'user'])
+-            ->when(isset($filters['bahan_baku_id']), fn($q) =>
++            ->when(!empty($filters['bahan_baku_id']), fn($q) =>
+                 $q->where('bahan_baku_id', $filters['bahan_baku_id'])
+             )
+-            ->when(isset($filters['tipe']), fn($q) =>
++            ->when(!empty($filters['tipe']), fn($q) =>
+                 $q->where('tipe', $filters['tipe'])
+             )
+-            ->latest()->paginate(20);
++            ->when(!empty($filters['dari']), fn($q) =>
++                $q->whereDate('created_at', '>=', $filters['dari'])
++            )
++            ->when(!empty($filters['sampai']), fn($q) =>
++                $q->whereDate('created_at', '<=', $filters['sampai'])
++            )
++            ->latest()->paginate(20)->withQueryString();
+     }
+ 
+     public function getByBahan(int $bahanId)
+diff --git a/app/Services/StokService.php b/app/Services/StokService.php
+index 42b9989..11ec59c 100644
+--- a/app/Services/StokService.php
++++ b/app/Services/StokService.php
+@@ -99,6 +99,42 @@ public function stokMasuk(
+ }
+     
+ 
++    /**
++     * Penyesuaian stok (stock opname) — dipakai saat stok fisik hasil
++     * hitung ulang berbeda dari stok sistem (rusak, tumpah, salah catat, dll).
++     * Selisih bisa naik maupun turun. Keterangan WAJIB diisi untuk audit trail.
++     */
++    public function stokPenyesuaian(int $bahanId, float $stokFisik, string $keterangan): void
++    {
++        $bahan       = $this->bahanBakuRepo->findById($bahanId);
++        $stokSebelum = $bahan->stok;
++        $selisih     = $stokFisik - $stokSebelum;
++
++        if ($selisih == 0) {
++            return; // tidak ada perubahan, tidak perlu dicatat
++        }
++
++        $this->bahanBakuRepo->updateStok($bahanId, $stokFisik);
++
++        $this->riwayatStokRepo->create([
++            'bahan_baku_id' => $bahanId,
++            'user_id'       => Auth::id(),
++            'transaksi_id'  => null,
++            'tipe'          => 'penyesuaian',
++            'jumlah'        => abs($selisih),
++            'stok_sebelum'  => $stokSebelum,
++            'stok_sesudah'  => $stokFisik,
++            'keterangan'    => sprintf(
++                '%s (%s%s %s) — %s',
++                'Penyesuaian stok opname',
++                $selisih > 0 ? '+' : '-',
++                number_format(abs($selisih), 2),
++                $bahan->satuan,
++                $keterangan
++            ),
++        ]);
++    }
++
+     public function stokKeluar(int $bahanId, float $jumlah, string $keterangan = ''): void
+     {
+         $bahan = $this->bahanBakuRepo->findById($bahanId);
+diff --git a/resources/views/owner/bahan-baku/index.blade.php b/resources/views/owner/bahan-baku/index.blade.php
+index 8d01648..518d5c5 100644
+--- a/resources/views/owner/bahan-baku/index.blade.php
++++ b/resources/views/owner/bahan-baku/index.blade.php
+@@ -119,6 +119,10 @@ class="form-control" placeholder="Cari kode atau nama bahan...">
+                                    style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#e07c7c; font-size:11px; text-decoration:none;">
+                                    - Keluar
+                                 </a>
++                                <a href="{{ route('owner.stok.penyesuaian', $bahan->id) }}"
++                                   style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#c8a97e; font-size:11px; text-decoration:none;">
++                                   Penyesuaian
++                                </a>
+                                 <a href="{{ route('owner.riwayat-stok.by-bahan', $bahan->id) }}"
+                                    style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#5b8dee; font-size:11px; text-decoration:none;">
+                                    Riwayat
+diff --git a/resources/views/owner/bahan-baku/riwayat.blade.php b/resources/views/owner/bahan-baku/riwayat.blade.php
+index e78de0f..26e9a35 100644
+--- a/resources/views/owner/bahan-baku/riwayat.blade.php
++++ b/resources/views/owner/bahan-baku/riwayat.blade.php
+@@ -38,6 +38,7 @@
+                 <th>Sebelum</th>
+                 <th>Sesudah</th>
+                 <th>Keterangan</th>
++                <th>Oleh</th>
+             </tr>
+         </thead>
+         <tbody>
+@@ -58,16 +59,22 @@
+                         {{ ucfirst($log->tipe) }}
+                     </span>
+                 </td>
+-                <td style="font-weight:600; color:{{ $log->tipe === 'masuk' ? '#3ecf8e' : '#e07c7c' }};">
+-                    {{ $log->tipe === 'masuk' ? '+' : '-' }}{{ $log->jumlah }} {{ $log->bahanBaku->satuan }}
++                @php
++                    $naik = $log->stok_sesudah >= $log->stok_sebelum;
++                @endphp
++                <td style="font-weight:600; color:{{ $naik ? '#3ecf8e' : '#e07c7c' }};">
++                    {{ $naik ? '+' : '-' }}{{ number_format(abs($log->stok_sesudah - $log->stok_sebelum), 2) }} {{ $log->bahanBaku->satuan }}
+                 </td>
+                 <td style="color:#888;">{{ $log->stok_sebelum }}</td>
+                 <td style="color:#c8a97e; font-weight:500;">{{ $log->stok_sesudah }}</td>
+                 <td style="color:#666; font-size:11px;">{{ $log->keterangan ?? '-' }}</td>
++                <td style="color:#888; font-size:11px;">
++                    {{ $log->user->name ?? 'Sistem (Otomatis)' }}
++                </td>
+             </tr>
+             @empty
+             <tr>
+-                <td colspan="7" style="text-align:center; color:#555; padding:40px;">Belum ada riwayat stok.</td>
++                <td colspan="8" style="text-align:center; color:#555; padding:40px;">Belum ada riwayat stok.</td>
+             </tr>
+             @endforelse
+         </tbody>
+diff --git a/resources/views/owner/stok/penyesuaian.blade.php b/resources/views/owner/stok/penyesuaian.blade.php
+new file mode 100644
+index 0000000..38eb0ab
+--- /dev/null
++++ b/resources/views/owner/stok/penyesuaian.blade.php
+@@ -0,0 +1,104 @@
++@extends('layouts.app')
++@section('title', 'Penyesuaian Stok')
++@section('page-title', 'Penyesuaian Stok')
++
++@section('content')
++<div class="row justify-content-center">
++    <div class="col-md-5">
++        <div class="chart-card">
++            <div class="chart-title">🧮 Penyesuaian Stok (Stock Opname) — {{ $bahan->nama_bahan }}</div>
++            <div style="font-size:11px; color:#666; margin-bottom:16px;">
++                Gunakan ini kalau stok fisik hasil hitung ulang beda dari stok sistem
++                (rusak, tumpah, kadaluarsa, salah catat, dll). Selisihnya akan tercatat
++                otomatis di riwayat stok dengan tipe <b>Penyesuaian</b>.
++            </div>
++
++            {{-- Info Stok Sekarang --}}
++            <div class="alert-row mb-4">
++                <div>
++                    <div style="font-size:11px; color:#888; margin-bottom:2px;">Stok Sistem Saat Ini</div>
++                    <div style="font-size:22px; font-weight:700; color:#c8a97e;">
++                        {{ $bahan->stok }} {{ $bahan->satuan }}
++                    </div>
++                </div>
++            </div>
++
++            <form method="POST" action="{{ route('owner.stok.simpan-penyesuaian', $bahan->id) }}">
++                @csrf
++
++                {{-- Stok Fisik --}}
++                <div class="mb-3">
++                    <label style="font-size:11px; color:#888; text-transform:uppercase;">
++                        Stok Fisik Hasil Hitung ({{ $bahan->satuan }})
++                    </label>
++                    <input type="number" name="stok_fisik" id="stokFisik" class="form-control mt-1"
++                           placeholder="0" step="0.01" min="0"
++                           value="{{ old('stok_fisik', $bahan->stok) }}" required>
++                    @error('stok_fisik')
++                        <div style="color:#e07c7c; font-size:11px; margin-top:4px;">{{ $message }}</div>
++                    @enderror
++                </div>
++
++                {{-- Keterangan (wajib) --}}
++                <div class="mb-4">
++                    <label style="font-size:11px; color:#888; text-transform:uppercase;">
++                        Alasan Penyesuaian <span style="color:#e07c7c;">*wajib</span>
++                    </label>
++                    <input type="text" name="keterangan" class="form-control mt-1"
++                           placeholder="Contoh: Hasil stock opname bulanan, 2 kg rusak kena air"
++                           value="{{ old('keterangan') }}" required>
++                    @error('keterangan')
++                        <div style="color:#e07c7c; font-size:11px; margin-top:4px;">{{ $message }}</div>
++                    @enderror
++                </div>
++
++                {{-- Preview Selisih --}}
++                <div id="previewBox" style="display:none; background:#0f1117; border-radius:8px; padding:12px; margin-bottom:16px; border:1px solid #23262f;">
++                    <div style="font-size:11px; color:#888; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.06em;">Preview Selisih</div>
++                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
++                        <span style="color:#888;">Stok Sistem</span>
++                        <span style="color:#e8e6e0;">{{ $bahan->stok }} {{ $bahan->satuan }}</span>
++                    </div>
++                    <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:700; border-top:1px solid #23262f; padding-top:8px; margin-top:4px;">
++                        <span style="color:#888;">Selisih</span>
++                        <span id="previewSelisih" style="color:#c8a97e;">0 {{ $bahan->satuan }}</span>
++                    </div>
++                </div>
++
++                <div class="d-flex gap-2">
++                    <a href="{{ route('owner.bahan-baku.index') }}"
++                       style="flex:1; text-align:center; padding:10px; border-radius:8px; border:1px solid #2a2d38; color:#888; text-decoration:none; font-size:13px;">
++                        Batal
++                    </a>
++                    <button type="submit" class="btn-gold" style="flex:1; padding:10px; border-radius:8px; font-size:13px;">
++                        Simpan Penyesuaian
++                    </button>
++                </div>
++            </form>
++        </div>
++    </div>
++</div>
++@endsection
++
++@push('scripts')
++<script>
++const stokSistem = {{ $bahan->stok }};
++const satuan     = '{{ $bahan->satuan }}';
++
++document.getElementById('stokFisik').addEventListener('input', function() {
++    const fisik    = parseFloat(this.value);
++    const preview  = document.getElementById('previewBox');
++    const selisihEl = document.getElementById('previewSelisih');
++
++    if (isNaN(fisik)) {
++        preview.style.display = 'none';
++        return;
++    }
++
++    const selisih = fisik - stokSistem;
++    preview.style.display = 'block';
++    selisihEl.textContent = (selisih >= 0 ? '+' : '') + selisih.toFixed(2) + ' ' + satuan;
++    selisihEl.style.color = selisih === 0 ? '#888' : (selisih > 0 ? '#3ecf8e' : '#e07c7c');
++});
++</script>
++@endpush
+diff --git a/routes/web.php b/routes/web.php
+index 88284af..36515e7 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -36,6 +36,8 @@
+     Route::post('stok/{bahan}/masuk',  [StokController::class, 'simpanMasuk'])->name('stok.simpan-masuk');
+     Route::get('stok/{bahan}/keluar',  [StokController::class, 'keluar'])->name('stok.keluar');
+     Route::post('stok/{bahan}/keluar', [StokController::class, 'simpanKeluar'])->name('stok.simpan-keluar');
++    Route::get('stok/{bahan}/penyesuaian',  [StokController::class, 'penyesuaian'])->name('stok.penyesuaian');
++    Route::post('stok/{bahan}/penyesuaian', [StokController::class, 'simpanPenyesuaian'])->name('stok.simpan-penyesuaian');
+     Route::resource('resep', ResepProdukController::class);
+     Route::get('resep/menu/{menu}', [ResepProdukController::class, 'byMenu'])->name('resep.by-menu');
+     Route::get('riwayat-stok', [RiwayatStokController::class, 'index'])->name('riwayat-stok.index');

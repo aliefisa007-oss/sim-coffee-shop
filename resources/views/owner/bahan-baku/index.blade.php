@@ -119,6 +119,10 @@
                                    style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#e07c7c; font-size:11px; text-decoration:none;">
                                    - Keluar
                                 </a>
+                                <a href="{{ route('owner.stok.penyesuaian', $bahan->id) }}"
+                                   style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#c8a97e; font-size:11px; text-decoration:none;">
+                                   Penyesuaian
+                                </a>
                                 <a href="{{ route('owner.riwayat-stok.by-bahan', $bahan->id) }}"
                                    style="padding:3px 8px; border-radius:6px; border:1px solid #2a2d38; color:#5b8dee; font-size:11px; text-decoration:none;">
                                    Riwayat

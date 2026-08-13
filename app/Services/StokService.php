@@ -99,6 +99,42 @@ class StokService
 }
     
 
+    /**
+     * Penyesuaian stok (stock opname) — dipakai saat stok fisik hasil
+     * hitung ulang berbeda dari stok sistem (rusak, tumpah, salah catat, dll).
+     * Selisih bisa naik maupun turun. Keterangan WAJIB diisi untuk audit trail.
+     */
+    public function stokPenyesuaian(int $bahanId, float $stokFisik, string $keterangan): void
+    {
+        $bahan       = $this->bahanBakuRepo->findById($bahanId);
+        $stokSebelum = $bahan->stok;
+        $selisih     = $stokFisik - $stokSebelum;
+
+        if ($selisih == 0) {
+            return; // tidak ada perubahan, tidak perlu dicatat
+        }
+
+        $this->bahanBakuRepo->updateStok($bahanId, $stokFisik);
+
+        $this->riwayatStokRepo->create([
+            'bahan_baku_id' => $bahanId,
+            'user_id'       => Auth::id(),
+            'transaksi_id'  => null,
+            'tipe'          => 'penyesuaian',
+            'jumlah'        => abs($selisih),
+            'stok_sebelum'  => $stokSebelum,
+            'stok_sesudah'  => $stokFisik,
+            'keterangan'    => sprintf(
+                '%s (%s%s %s) — %s',
+                'Penyesuaian stok opname',
+                $selisih > 0 ? '+' : '-',
+                number_format(abs($selisih), 2),
+                $bahan->satuan,
+                $keterangan
+            ),
+        ]);
+    }
+
     public function stokKeluar(int $bahanId, float $jumlah, string $keterangan = ''): void
     {
         $bahan = $this->bahanBakuRepo->findById($bahanId);
