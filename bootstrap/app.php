@@ -20,10 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
         'active' => \App\Http\Middleware\CheckActiveUser::class,
 	'role.api' => \App\Http\Middleware\CheckRoleApi::class,
     ]);
-
-    $middleware->web(append: [
-        \App\Http\Middleware\NoCacheHtml::class,
-    ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
